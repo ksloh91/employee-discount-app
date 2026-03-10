@@ -10,7 +10,7 @@ A React web app where **corporates** subscribe to a service so their **employees
 |-------|------|
 | **Corporate** | Subscribe to the program; manage which employees have access; see usage/engagement. |
 | **Employee** | Log in (tied to employer), browse deals, redeem offers, see redemption history. |
-| **Merchant** | Create and manage deals; see redemptions and performance. |
+| **Merchant** | Create and manage deals; see redemptions and performance. |mim
 | **Platform** | Onboard corporates and merchants; host the app; (later) billing and analytics. |
 
 ---
