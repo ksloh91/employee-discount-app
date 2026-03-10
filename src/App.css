@@ -1,0 +1,4 @@
+/* App-wide base; layout and pages define their own spacing */
+#root {
+  min-height: 100vh;
+}

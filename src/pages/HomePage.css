@@ -1,0 +1,74 @@
+.home {
+  padding: 0 0 3rem;
+}
+
+.home-hero {
+  text-align: center;
+  padding: 2rem 1rem 3rem;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px;
+  color: #eee;
+  margin-bottom: 2rem;
+}
+
+.home-hero h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.home-hero p {
+  color: #b8c5d6;
+  max-width: 480px;
+  margin: 0 auto 1.5rem;
+  line-height: 1.5;
+}
+
+.home-cta {
+  display: inline-block;
+  padding: 0.6rem 1.25rem;
+  background: #4a90d9;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.home-cta:hover {
+  background: #3a7bc8;
+}
+
+.home-welcome .home-cta {
+  margin-top: 0.5rem;
+}
+
+.home-roles h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.home-card {
+  padding: 1.25rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.home-card h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: #1a1a2e;
+}
+
+.home-card p {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0;
+  line-height: 1.4;
+}
