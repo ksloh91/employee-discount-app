@@ -2,22 +2,30 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const ROLES = [
-  { id: 'employee', label: 'Employee', description: 'Browse and redeem deals' },
-  { id: 'corporate', label: 'Corporate admin', description: 'Manage company and usage' },
-  { id: 'merchant', label: 'Merchant', description: 'Create and manage your deals' },
-];
-
 export default function LoginPage() {
-  const [selectedRole, setSelectedRole] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
   const from = location.state?.from?.pathname || '/';
 
-  const handleLogin = (role) => {
-    login(role, { name: `Demo ${role}` });
-    navigate(from, { replace: true });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      console.error(err);
+      setError('Login failed. Please check your email and password.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -29,44 +37,47 @@ export default function LoginPage() {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Log in</h1>
           <p className="text-xs text-slate-500">
-            Choose a role to try the app (no real auth yet — demo only).
+            Use one of the test accounts configured in Firebase Auth.
           </p>
         </div>
-        <div className="grid gap-3">
-          {ROLES.map((role) => {
-            const isSelected = selectedRole === role.id;
-            return (
-              <button
-                key={role.id}
-                type="button"
-                className={`flex flex-col items-start rounded-2xl border px-4 py-3 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 ${
-                  isSelected
-                    ? 'border-primary/80 bg-primary text-slate-950 shadow-md'
-                    : 'border-slate-200 bg-slate-50 text-slate-900 hover:border-slate-300 hover:bg-white'
-                }`}
-                onClick={() => setSelectedRole(role.id)}
-              >
-                <span className="font-medium">{role.label}</span>
-                <span
-                  className={`mt-0.5 text-[0.7rem] ${
-                    isSelected ? 'text-slate-900/80' : 'text-slate-500'
-                  }`}
-                >
-                  {role.description}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        {selectedRole && (
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-xs font-medium text-slate-600">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-xs font-medium text-slate-600">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          {error && <p className="text-xs text-red-600">{error}</p>}
           <button
-            type="button"
-            className="inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-primary/40 hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50"
-            onClick={() => handleLogin(selectedRole)}
+            type="submit"
+            disabled={submitting}
+            className="inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-primary/40 hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50"
           >
-            Continue as {ROLES.find((r) => r.id === selectedRole)?.label}
+            {submitting ? 'Logging in…' : 'Log in'}
           </button>
-        )}
+        </form>
       </div>
     </div>
   );

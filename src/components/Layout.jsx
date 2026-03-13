@@ -11,14 +11,14 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-slate-50 to-slate-100 text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-slate-950 text-slate-100 flex flex-col">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Link
             to="/"
             className="text-lg font-semibold tracking-tight text-slate-900 hover:text-primary"
           >
-            Employee Discounts
+            Perkaholics Employee Discounts
           </Link>
           <nav className="flex items-center gap-4 text-sm font-medium text-slate-600">
             {user?.role === 'employee' && (
