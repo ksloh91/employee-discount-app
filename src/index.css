@@ -1,9 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @theme {
   --color-primary: #ffba00;
   --color-secondary: #6366f1;
   --color-tertiary: #22c55e;
+
+  /* Orange family for CTAs */
+  --color-orange-01: #fff3c2; /* very light */
+  --color-orange-02: #ffd66b; /* light */
+  --color-orange-03: #ffba00; /* primary */
+  --color-orange-04: #e89a00; /* darker */
+  --color-orange-05: #c77700; /* darkest */
+
+  --color-delete-01: #ffe5e5; /* very light */
+  --color-delete-02: #ffc2c2; /* light */
+  --color-delete-03: #ff9999; /* primary */
+  --color-delete-04: #ff7777; /* darker */
+  --color-delete-05: #ff5555; /* darkest */
 }

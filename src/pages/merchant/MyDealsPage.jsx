@@ -1,7 +1,10 @@
-import { mockDeals } from '../../data/mockDeals';
+import { useNavigate } from 'react-router-dom';
+import { useDeals } from '../../context/DealsContext';
 
 export default function MyDealsPage() {
-  const merchantDeals = mockDeals.filter((d) => d.merchantName === 'Coffee Hub');
+  const navigate = useNavigate();
+  const { deals } = useDeals();
+  const merchantDeals = deals.filter((d) => d.merchantName === 'Coffee Hub');
 
   return (
     <div className="space-y-4">
@@ -11,7 +14,7 @@ export default function MyDealsPage() {
           Create and manage your offers. (Only mock data for now.)
         </p>
       </div>
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {merchantDeals.length === 0 ? (
           <p className="text-sm text-slate-400">No deals yet. Add your first offer.</p>
         ) : (
@@ -28,9 +31,27 @@ export default function MyDealsPage() {
                 <span className="font-semibold text-slate-200"> · Valid until:</span>{' '}
                 <span className="text-slate-200">{deal.validUntil}</span>
               </p>
+
+              <div className="flex">
+                <div className="flex-1" />
+                <button 
+                  className="mt-4 w-[100px] items-center justify-center rounded-full bg-orange-03 px-4 py-2 text-xs font-semibold text-black shadow hover:bg-[--color-orange-05]"
+                  onClick={() => navigate(`/merchant/edit-deal/${deal.id}`)}
+                >
+                  Edit
+                </button>
+              </div>
             </div>
           ))
         )}
+      </div>
+      <div>
+        <button 
+        className="inline-flex w-full items-center justify-center rounded-full bg-orange-03 px-4 py-2 text-xs font-semibold text-black shadow hover:bg-[--color-orange-05]"
+        onClick={() => navigate('/merchant/add-deal')}
+        >
+          Add new deal
+        </button>
       </div>
     </div>
   );

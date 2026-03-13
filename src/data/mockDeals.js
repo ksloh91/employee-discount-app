@@ -29,4 +29,42 @@ export const mockDeals = [
     validUntil: '2025-12-31',
     category: 'Health & Fitness',
   },
+  {
+    id: '4',
+    merchantName: 'Bookworm Books',
+    title: '25% off all books',
+    description: 'In-store and online. Excludes already discounted items.',
+    discount: '25%',
+    code: 'BOOK25',
+    validUntil: '2025-06-30',
+    category: 'Books',
+  },
+  {
+    id: '5',
+    merchantName: 'Movie Night',
+    title: '10% off movie tickets',
+    description: 'In-store and online. Excludes already discounted items.',
+    discount: '10%',
+    code: 'MOVIE10',
+    validUntil: '2025-06-30',
+    category: 'Movies',
+  },
 ];
+
+export const mockCategories = [
+  'Food & Drink',
+  'Retail',
+  'Health & Fitness',
+];
+
+export function getMockDeals() {
+  return mockDeals;
+}
+
+export function getMockCategories() {
+  return mockCategories;
+}
+
+export function getRedeemedDeals() {
+  return mockDeals.filter((d) => d.redeemed);
+}
