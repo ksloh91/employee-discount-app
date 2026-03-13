@@ -1,14 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { useDeals } from '../../context/DealsContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function DealsPage() {
-  const { deals, updateDeal } = useDeals();
+  const { deals } = useDeals();
+  const { user } = useAuth();
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [sliderComplete, setSliderComplete] = useState(false);
+  const [redeemedIds, setRedeemedIds] = useState(new Set());
+
+  useEffect(() => {
+    if (!user) return;
+    const loadRedemptions = async () => {
+      const q = query(
+        collection(db, 'redemptions'),
+        where('userId', '==', user.uid),
+      );
+      const snap = await getDocs(q);
+      const ids = new Set(snap.docs.map((d) => d.data().dealId));
+      setRedeemedIds(ids);
+    };
+    loadRedemptions();
+  }, [user]);
 
   const openRedeemModal = (deal) => {
     setSelectedDeal(deal);
-    setSliderComplete(!!deal.redeemed);
+    setSliderComplete(redeemedIds.has(deal.id));
   };
 
   const closeRedeemModal = () => {
@@ -16,14 +35,16 @@ export default function DealsPage() {
     setSliderComplete(false);
   };
 
-  const handleSliderActivate = () => {
-    if (!selectedDeal || sliderComplete) return;
+  const handleSliderActivate = async () => {
+    if (!selectedDeal || sliderComplete || !user) return;
     setSliderComplete(true);
-    updateDeal({
-      ...selectedDeal,
-      redeemed: true,
+    await addDoc(collection(db, 'redemptions'), {
+      userId: user.uid,
+      dealId: selectedDeal.id,
+      merchantId: selectedDeal.merchantId ?? null,
       redeemedAt: new Date().toISOString(),
     });
+    setRedeemedIds((prev) => new Set(prev).add(selectedDeal.id));
   };
 
   return (
@@ -113,7 +134,7 @@ export default function DealsPage() {
               </span>
             </div>
             <div className="mt-4">
-              {deal.redeemed ? (
+              {redeemedIds.has(deal.id) ? (
                 <div className="inline-flex w-full items-center justify-center rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
                   Redeemed
                 </div>

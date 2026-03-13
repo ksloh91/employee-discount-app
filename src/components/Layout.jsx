@@ -1,5 +1,5 @@
-import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -7,21 +7,29 @@ export default function Layout() {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-slate-950 text-slate-100 flex flex-col">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link
-            to="/"
-            className="text-lg font-semibold tracking-tight text-slate-900 hover:text-primary"
-          >
-            Perkaholics Employee Discounts
-          </Link>
+          <div className="flex flex-col items-start gap-0">
+            <Link
+              to="/"
+              className="text-lg font-semibold tracking-tight text-slate-900 hover:text-primary"
+            >
+              Perkaholics Employee Discounts
+            </Link>
+
+            {user && (
+              <div className="text-sm text-slate-500">
+                Logged in as {user.displayName}
+              </div>
+            )}
+          </div>
           <nav className="flex items-center gap-4 text-sm font-medium text-slate-600">
-            {user?.role === 'employee' && (
+            {user?.role === "employee" && (
               <>
                 <Link
                   to="/employee/deals"
@@ -37,7 +45,7 @@ export default function Layout() {
                 </Link>
               </>
             )}
-            {user?.role === 'corporate' && (
+            {user?.role === "corporate" && (
               <Link
                 to="/corporate/dashboard"
                 className="rounded-full px-3 py-1 hover:text-primary"
@@ -45,7 +53,7 @@ export default function Layout() {
                 Dashboard
               </Link>
             )}
-            {user?.role === 'merchant' && (
+            {user?.role === "merchant" && (
               <Link
                 to="/merchant/deals"
                 className="rounded-full px-3 py-1 hover:text-primary"
