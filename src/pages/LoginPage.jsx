@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,11 +7,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/';
+  useEffect(() => {
+    if (!user) return;
+
+    const fromState = location.state?.from?.pathname;
+    const fallbackByRole =
+      user.role === 'merchant'
+        ? '/merchant/deals'
+        : user.role === 'corporate'
+        ? '/corporate/dashboard'
+        : '/employee/deals';
+
+    const target = fromState || fallbackByRole;
+    navigate(target, { replace: true });
+  }, [user, location.state, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +32,6 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate(from, { replace: true });
     } catch (err) {
       console.error(err);
       setError('Login failed. Please check your email and password.');
