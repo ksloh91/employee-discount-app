@@ -180,3 +180,4 @@ const [email, setEmail] = useState('');
 - **Mock data:** `src/data/mockDeals.js` (later replace with API calls).
 
 Use this file as a cheat sheet while you implement Phase 2 in **PROJECT_PLAN.md**.
+  

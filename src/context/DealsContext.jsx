@@ -6,6 +6,9 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  orderBy,
+  query,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -19,7 +22,7 @@ export function DealsProvider({ children }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const snap = await getDocs(collection(db, 'deals'));
+        const snap = await getDocs(query(collection(db, 'deals'), orderBy('createdAt', 'desc')));
         const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setDeals(items);
       } catch (e) {
@@ -34,8 +37,10 @@ export function DealsProvider({ children }) {
   }, []);
 
   const addDeal = (deal) => {
-    return addDoc(collection(db, 'deals'), deal).then((ref) => {
-      const next = { id: ref.id, ...deal };
+    const payload = { ...deal, createdAt: serverTimestamp() };
+    return addDoc(collection(db, 'deals'), payload).then((ref) => {
+      // Optimistic local value; Firestore will store server timestamp.
+      const next = { id: ref.id, ...deal, createdAt: new Date().toISOString() };
       setDeals((current) => [...current, next]);
       return next;
     });

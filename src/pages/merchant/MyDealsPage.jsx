@@ -1,17 +1,28 @@
 import { useNavigate } from 'react-router-dom';
 import { useDeals } from '../../context/DealsContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function MyDealsPage() {
   const navigate = useNavigate();
   const { deals } = useDeals();
-  const merchantDeals = deals.filter((d) => d.merchantName === 'Coffee Hub');
+  const { user } = useAuth();
+
+  const merchantDeals =
+    user?.role === 'merchant'
+      ? deals.filter((d) => {
+          const matchId = user.merchantId && d.merchantId === user.merchantId;
+          const matchName = user.displayName && d.merchantName === user.displayName;
+          return matchId || matchName;
+        })
+      : [];
+
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold text-slate-50">My deals</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Create and manage your offers. (Only mock data for now.)
+          Create and manage your offers.
         </p>
       </div>
       <div className="flex flex-col gap-3">
