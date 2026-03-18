@@ -11,6 +11,7 @@ import DashboardPage from './pages/corporate/DashboardPage';
 import MyDealsPage from './pages/merchant/MyDealsPage';
 import AddDealsPage from './pages/merchant/AddDealsPage';
 import EditDealPage from './pages/merchant/EditDealPage';
+import MerchantDashboardPage from './pages/merchant/MerchantDashboardPage';
 import './App.css';
 
 export default function App() {
@@ -51,6 +52,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['merchant']}>
                     <MyDealsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/merchant/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['merchant']}>
+                    <MerchantDashboardPage />
                   </ProtectedRoute>
                 }
               />

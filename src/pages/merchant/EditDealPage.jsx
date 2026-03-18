@@ -12,7 +12,17 @@ export default function EditDealPage() {
   };
   const handleEditDeal = () => {
     if (!deal) return;
-    updateDeal({ ...deal, merchantName: "Coffee Hub" });
+    updateDeal({
+      ...deal,
+      maxTotalRedemptions:
+        deal.maxTotalRedemptions === "" || deal.maxTotalRedemptions == null
+          ? null
+          : Number(deal.maxTotalRedemptions),
+      maxPerUserRedemptions:
+        deal.maxPerUserRedemptions === "" || deal.maxPerUserRedemptions == null
+          ? null
+          : Number(deal.maxPerUserRedemptions),
+    });
     navigate("/merchant/deals");
   };
 
@@ -54,6 +64,37 @@ export default function EditDealPage() {
             Valid until
           </label>
           <input type="date" id="validUntil" name="validUntil" value={deal?.validUntil} onChange={handleChange} className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary" />
+        </div>
+      </div>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label htmlFor="maxTotalRedemptions" className="text-sm font-medium text-slate-400">
+            Max total redemptions (optional)
+          </label>
+          <input
+            type="number"
+            min="1"
+            id="maxTotalRedemptions"
+            name="maxTotalRedemptions"
+            value={deal?.maxTotalRedemptions ?? ""}
+            onChange={handleChange}
+            className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary"
+            placeholder="e.g. 100"
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="maxPerUserRedemptions" className="text-sm font-medium text-slate-400">
+            Max per user
+          </label>
+          <input
+            type="number"
+            min="1"
+            id="maxPerUserRedemptions"
+            name="maxPerUserRedemptions"
+            value={deal?.maxPerUserRedemptions ?? ""}
+            onChange={handleChange}
+            className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary"
+          />
         </div>
       </div>
       <button className="mt-8 inline-flex w-full items-center justify-center rounded-full bg-orange-03 px-4 py-2 text-xs font-semibold text-black shadow hover:bg-[--color-orange-05]"

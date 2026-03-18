@@ -12,7 +12,10 @@ export default function DealsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("a-z");
   const [sliderComplete, setSliderComplete] = useState(false);
-  const [redeemedIds, setRedeemedIds] = useState(new Set());
+  const [redeemedCounts, setRedeemedCounts] = useState(new Map());
+  const [redeemError, setRedeemError] = useState("");
+  const [selectedDealTotalRedeemed, setSelectedDealTotalRedeemed] = useState(0);
+  const [checkingLimits, setCheckingLimits] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -22,24 +25,83 @@ export default function DealsPage() {
         where("userId", "==", user.uid),
       );
       const snap = await getDocs(q);
-      const ids = new Set(snap.docs.map((d) => d.data().dealId));
-      setRedeemedIds(ids);
+      const next = new Map();
+      snap.docs.forEach((d) => {
+        const dealId = d.data().dealId;
+        if (!dealId) return;
+        next.set(dealId, (next.get(dealId) || 0) + 1);
+      });
+      setRedeemedCounts(next);
     };
     loadRedemptions();
   }, [user]);
 
-  const openRedeemModal = (deal) => {
+  const openRedeemModal = async (deal) => {
     setSelectedDeal(deal);
-    setSliderComplete(redeemedIds.has(deal.id));
+    // Slider is per modal session; allow redeem again until limits reached.
+    setSliderComplete(false);
+    setRedeemError("");
+    setSelectedDealTotalRedeemed(0);
+
+    // If the deal has a total cap, fetch current total so we can show UI state.
+    if (deal?.maxTotalRedemptions != null) {
+      setCheckingLimits(true);
+      try {
+        const totalSnap = await getDocs(
+          query(collection(db, "redemptions"), where("dealId", "==", deal.id)),
+        );
+        setSelectedDealTotalRedeemed(totalSnap.size);
+      } catch {
+        // If we can't fetch, we still enforce at redeem-time.
+        setSelectedDealTotalRedeemed(0);
+      } finally {
+        setCheckingLimits(false);
+      }
+    }
   };
 
   const closeRedeemModal = () => {
     setSelectedDeal(null);
     setSliderComplete(false);
+    setRedeemError("");
+    setSelectedDealTotalRedeemed(0);
+    setCheckingLimits(false);
   };
 
   const handleSliderActivate = async () => {
     if (!selectedDeal || sliderComplete || !user) return;
+    setRedeemError("");
+
+    const maxTotal = selectedDeal.maxTotalRedemptions ?? null;
+    const maxPerUser = selectedDeal.maxPerUserRedemptions ?? null;
+    const currentUserCount = redeemedCounts.get(selectedDeal.id) || 0;
+
+    // Simple enforcement (client-side): count existing redemptions
+    if (maxTotal != null) {
+      const totalSnap = await getDocs(
+        query(
+          collection(db, "redemptions"),
+          where("dealId", "==", selectedDeal.id),
+        ),
+      );
+      if (totalSnap.size >= maxTotal) {
+        setRedeemError(
+          "This offer has reached its maximum number of redemptions.",
+        );
+        return;
+      }
+    }
+
+    if (maxPerUser != null) {
+      // Use the already-loaded per-user count for this deal.
+      if (currentUserCount >= maxPerUser) {
+        setRedeemError(
+          "You’ve reached the maximum number of redemptions for this offer.",
+        );
+        return;
+      }
+    }
+
     setSliderComplete(true);
     await addDoc(collection(db, "redemptions"), {
       userId: user.uid,
@@ -47,7 +109,11 @@ export default function DealsPage() {
       merchantId: selectedDeal.merchantId ?? null,
       redeemedAt: new Date().toISOString(),
     });
-    setRedeemedIds((prev) => new Set(prev).add(selectedDeal.id));
+    setRedeemedCounts((prev) => {
+      const next = new Map(prev);
+      next.set(selectedDeal.id, (next.get(selectedDeal.id) || 0) + 1);
+      return next;
+    });
   };
 
   const categories = Array.from(
@@ -144,59 +210,71 @@ export default function DealsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {filteredDeals.map((deal) => (
-          <article
-            key={deal.id}
-            className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
-                {deal.merchantName[0]}
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  {deal.category}
-                </p>
-                <h2 className="text-sm font-semibold text-slate-900">
-                  {deal.merchantName}
-                </h2>
-                <p className="text-xs text-slate-500">{deal.title}</p>
-              </div>
-            </div>
+        {filteredDeals.map((deal) =>
+          // per-user redemption count for this deal
+          (() => {
+            const userCount = redeemedCounts.get(deal.id) || 0;
+            const maxPerUser = deal.maxPerUserRedemptions ?? null;
+            const limitReached = maxPerUser != null && userCount >= maxPerUser;
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[0.7rem] text-slate-500">
-              <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-800">
-                {deal.discount} off
-              </span>
-              {deal.code && (
-                <code className="rounded-md bg-slate-900 px-2 py-0.5 font-mono text-[0.7rem] text-white">
-                  {deal.code}
-                </code>
-              )}
-              <span className="text-[0.7rem] text-slate-500">
-                Valid until{" "}
-                <span className="font-medium text-slate-700">
-                  {deal.validUntil}
-                </span>
-              </span>
-            </div>
-            <div className="mt-4">
-              {redeemedIds.has(deal.id) ? (
-                <div className="inline-flex w-full items-center justify-center rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                  Redeemed
+            return (
+              <article
+                key={deal.id}
+                className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md"
+                onClick={() => openRedeemModal(deal)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                    {deal.merchantName[0]}
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {deal.category}
+                    </p>
+                    <h2 className="text-sm font-semibold text-slate-900">
+                      {deal.merchantName}
+                    </h2>
+                    <p className="text-xs text-slate-500">{deal.title}</p>
+                  </div>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  className="inline-flex w-full items-center justify-center rounded-full bg-orange-03 px-4 py-2 text-xs font-semibold text-black shadow hover:bg-[--color-orange-05]"
-                  onClick={() => openRedeemModal(deal)}
-                >
-                  Redeem offer
-                </button>
-              )}
-            </div>
-          </article>
-        ))}
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[0.7rem] text-slate-500">
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-800">
+                    {deal.discount} off
+                  </span>
+                  {deal.code && (
+                    <code className="rounded-md bg-slate-900 px-2 py-0.5 font-mono text-[0.7rem] text-white">
+                      {deal.code}
+                    </code>
+                  )}
+                  <span className="text-[0.7rem] text-slate-500">
+                    Valid until{" "}
+                    <span className="font-medium text-slate-700">
+                      {deal.validUntil}
+                    </span>
+                  </span>
+                </div>
+                <div className="mt-4">
+                  {limitReached ? (
+                    <div className="inline-flex w-full items-center justify-center rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                      {maxPerUser
+                        ? `Redeemed ${userCount}/${maxPerUser}`
+                        : "Redeemed"}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="inline-flex w-full items-center justify-center rounded-full bg-orange-03 px-4 py-2 text-xs font-semibold text-black shadow hover:bg-[--color-orange-05]"
+                      onClick={() => openRedeemModal(deal)}
+                    >
+                      {userCount > 0 ? "Redeem again" : "Redeem offer"} {limitReached ? " (Fully Redeemed)" : ""}
+                    </button>
+                  )}
+                </div>
+              </article>
+            );
+          })(),
+        )}
       </div>
 
       {selectedDeal && (
@@ -222,25 +300,89 @@ export default function DealsPage() {
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Slide to redeem
               </p>
-              <button
-                type="button"
-                onClick={handleSliderActivate}
-                className="relative flex h-10 w-full items-center rounded-full bg-slate-100 text-xs font-medium text-slate-600 shadow-inner transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-              >
-                <span
-                  className={`absolute left-0 flex h-9 w-24 items-center justify-center rounded-full bg-orange-03 text-[0.7rem] font-semibold text-slate-950 shadow transition-transform ${
-                    sliderComplete
-                      ? "translate-x-[calc(100%-4.75rem)]"
-                      : "translate-x-0"
-                  }`}
-                >
-                  Slide
+              <p className="text-[0.7rem] text-slate-500">
+                Redeemed by you:{" "}
+                <span className="font-semibold text-slate-700">
+                  {redeemedCounts.get(selectedDeal.id) || 0}
                 </span>
-                <span className="mx-auto text-[0.7rem]">
-                  {sliderComplete ? "Redeemed" : "Slide to reveal QR & code"}
-                </span>
-              </button>
+                {selectedDeal.maxPerUserRedemptions != null && (
+                  <>
+                    {" "}
+                    /{" "}
+                    <span className="font-semibold text-slate-700">
+                      {selectedDeal.maxPerUserRedemptions}
+                    </span>
+                  </>
+                )}
+              </p>
+              {selectedDeal.maxTotalRedemptions != null && (
+                <p className="text-[0.7rem] text-slate-500">
+                  Total redeemed:{" "}
+                  <span className="font-semibold text-slate-700">
+                    {selectedDealTotalRedeemed}
+                  </span>{" "}
+                  /{" "}
+                  <span className="font-semibold text-slate-700">
+                    {selectedDeal.maxTotalRedemptions}
+                  </span>
+                </p>
+              )}
+              {redeemError && (
+                <p className="text-xs font-semibold text-red-600">
+                  {redeemError}
+                </p>
+              )}
             </div>
+
+            {(() => {
+              const perUserCount = redeemedCounts.get(selectedDeal.id) || 0;
+              const maxPerUser = selectedDeal.maxPerUserRedemptions ?? null;
+              const maxTotal = selectedDeal.maxTotalRedemptions ?? null;
+              const perUserLimitReached = maxPerUser != null && perUserCount >= maxPerUser;
+              const totalLimitReached =
+                maxTotal != null && selectedDealTotalRedeemed >= maxTotal;
+              const fullyRedeemed = perUserLimitReached || totalLimitReached;
+
+              return (
+                <>
+                  {fullyRedeemed && !redeemError && (
+                    <p className="mt-2 text-xs font-semibold text-red-600">
+                      Fully redeemed
+                    </p>
+                  )}
+                  {checkingLimits && (
+                    <p className="mt-2 text-xs text-slate-500">Checking limits…</p>
+                  )}
+                  <button
+                    type="button"
+                    disabled={checkingLimits || fullyRedeemed}
+                    onClick={handleSliderActivate}
+                    className={`mt-3 relative flex h-10 w-full items-center rounded-full text-xs font-medium shadow-inner transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+                      fullyRedeemed
+                        ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    <span
+                      className={`absolute left-0 flex h-9 w-24 items-center justify-center rounded-full bg-orange-03 text-[0.7rem] font-semibold text-slate-950 shadow transition-transform ${
+                        sliderComplete
+                          ? "translate-x-[calc(100%-4.75rem)]"
+                          : "translate-x-0"
+                      }${fullyRedeemed ? " hidden" : ""}`}
+                    >
+                      Slide
+                    </span>
+                    <span className="mx-auto text-[0.7rem]">
+                      {fullyRedeemed
+                        ? "Limit reached"
+                        : sliderComplete
+                          ? "Redeemed"
+                          : "Slide to reveal QR & code"}
+                    </span>
+                  </button>
+                </>
+              );
+            })()}
 
             {sliderComplete && (
               <div className="mt-5 space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">

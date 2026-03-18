@@ -16,6 +16,8 @@ export default function AddDealsPage() {
     merchant: "",
     terms: "",
     image: "",
+    maxTotalRedemptions: "",
+    maxPerUserRedemptions: "1",
   });
 
   const handleChange = (e) => {
@@ -28,6 +30,8 @@ export default function AddDealsPage() {
       ...deal,
       merchantId: user.merchantId,              // must match user doc in Firestore
       merchantName: user.displayName || 'Merchant',
+      maxTotalRedemptions: deal.maxTotalRedemptions === "" ? null : Number(deal.maxTotalRedemptions),
+      maxPerUserRedemptions: deal.maxPerUserRedemptions === "" ? null : Number(deal.maxPerUserRedemptions),
     }).then(() => {
       navigate('/merchant/deals');
     });
@@ -127,6 +131,38 @@ export default function AddDealsPage() {
             id="category"
             name="category"
             value={deal.category}
+            onChange={handleChange}
+            className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary"
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label htmlFor="maxTotalRedemptions" className="text-sm font-medium text-slate-400">
+            Max total redemptions (optional)
+          </label>
+          <input
+            type="number"
+            min="1"
+            id="maxTotalRedemptions"
+            name="maxTotalRedemptions"
+            value={deal.maxTotalRedemptions}
+            onChange={handleChange}
+            className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary"
+            placeholder="e.g. 100"
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="maxPerUserRedemptions" className="text-sm font-medium text-slate-400">
+            Max per user
+          </label>
+          <input
+            type="number"
+            min="1"
+            id="maxPerUserRedemptions"
+            name="maxPerUserRedemptions"
+            value={deal.maxPerUserRedemptions}
             onChange={handleChange}
             className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary"
           />
