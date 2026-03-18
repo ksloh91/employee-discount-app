@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDeals } from "../../context/DealsContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AddDealsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { addDeal } = useDeals();
   const [deal, setDeal] = useState({
     title: "",
@@ -19,11 +21,19 @@ export default function AddDealsPage() {
   const handleChange = (e) => {
     setDeal({ ...deal, [e.target.name]: e.target.value });
   };
+
   const handleAddDeal = () => {
-    addDeal({ ...deal, merchantName: "Coffee Hub" }).then(() => {
-      navigate("/merchant/deals");
+    if (!user || user.role !== 'merchant') return;
+    addDeal({
+      ...deal,
+      merchantId: user.merchantId,              // must match user doc in Firestore
+      merchantName: user.displayName || 'Merchant',
+    }).then(() => {
+      navigate('/merchant/deals');
     });
   };
+
+
 
   return (
     <div>

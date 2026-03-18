@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
-import { useDeals } from '../../context/DealsContext';
-import { useAuth } from '../../context/AuthContext';
+import { useEffect, useState } from "react";
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { db } from "../../lib/firebase";
+import { useDeals } from "../../context/DealsContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function DealsPage() {
   const { deals } = useDeals();
   const { user } = useAuth();
   const [selectedDeal, setSelectedDeal] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("a-z");
   const [sliderComplete, setSliderComplete] = useState(false);
   const [redeemedIds, setRedeemedIds] = useState(new Set());
 
@@ -15,8 +18,8 @@ export default function DealsPage() {
     if (!user) return;
     const loadRedemptions = async () => {
       const q = query(
-        collection(db, 'redemptions'),
-        where('userId', '==', user.uid),
+        collection(db, "redemptions"),
+        where("userId", "==", user.uid),
       );
       const snap = await getDocs(q);
       const ids = new Set(snap.docs.map((d) => d.data().dealId));
@@ -38,7 +41,7 @@ export default function DealsPage() {
   const handleSliderActivate = async () => {
     if (!selectedDeal || sliderComplete || !user) return;
     setSliderComplete(true);
-    await addDoc(collection(db, 'redemptions'), {
+    await addDoc(collection(db, "redemptions"), {
       userId: user.uid,
       dealId: selectedDeal.id,
       merchantId: selectedDeal.merchantId ?? null,
@@ -47,6 +50,38 @@ export default function DealsPage() {
     setRedeemedIds((prev) => new Set(prev).add(selectedDeal.id));
   };
 
+  const categories = Array.from(
+    new Set(deals.map((deal) => deal.category)),
+  ).filter(Boolean);
+  const filteredDeals = deals
+    .filter(
+      (deal) => deal.category === selectedCategory || selectedCategory === null,
+    )
+    .filter((deal) =>
+      deal.merchantName.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+
+  const createdAtMs = (value) => {
+    if (!value) return 0;
+    if (typeof value === "object" && typeof value.toMillis === "function")
+      return value.toMillis();
+    const t = new Date(value).getTime();
+    return Number.isFinite(t) ? t : 0;
+  };
+
+  if (sortBy === "a-z") {
+    filteredDeals.sort((a, b) => a.merchantName.localeCompare(b.merchantName));
+  } else if (sortBy === "newest") {
+    filteredDeals.sort((a, b) => {
+      const byCreated = createdAtMs(b.createdAt) - createdAtMs(a.createdAt);
+      if (byCreated !== 0) return byCreated;
+      // fallback for older docs without createdAt
+      return (
+        new Date(b.validUntil).getTime() - new Date(a.validUntil).getTime()
+      );
+    });
+  }
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -54,55 +89,62 @@ export default function DealsPage() {
           Global reward catalog
         </h1>
         <p className="text-sm text-slate-600">
-          1000+ retail gift cards and prepaid offers, physical and online options.
+          1000+ retail gift cards and prepaid offers, physical and online
+          options.
         </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        {/* Categories Filter */}
         <div className="flex flex-wrap gap-2 text-[0.7rem] text-slate-600">
           <button
+            key="all"
             type="button"
-            className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 font-medium text-white"
+            className={`inline-flex items-center rounded-full px-3 py-1 font-medium transition ${
+              selectedCategory === null
+                ? "bg-slate-900 text-white"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+            onClick={() => setSelectedCategory(null)}
           >
             All
           </button>
-          <button
-            type="button"
-            className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700 hover:bg-slate-200"
-          >
-            Food &amp; drink
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700 hover:bg-slate-200"
-          >
-            Retail
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700 hover:bg-slate-200"
-          >
-            Health &amp; fitness
-          </button>
+          {categories.map((category) => (
+            <button
+              key={category}
+              type="button"
+              className={`inline-flex items-center rounded-full px-3 py-1 font-medium transition ${
+                selectedCategory === category
+                  ? "bg-slate-900 text-white"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+              onClick={() => setSelectedCategory(category)}
+            >
+              {category}
+            </button>
+          ))}
         </div>
         <div className="ml-auto flex w-full flex-col gap-2 text-xs text-slate-500 sm:w-auto sm:flex-row sm:items-center">
           <input
             type="search"
             placeholder="Search brands"
             className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-48"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
           <select
             className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-40"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
           >
-            <option>Sort: Recommended</option>
-            <option>Sort: A–Z</option>
-            <option>Sort: Newest</option>
+            <option value="a-z">Sort: A–Z</option>
+            <option value="newest">Sort: Newest</option>
           </select>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {deals.map((deal) => (
+        {filteredDeals.map((deal) => (
           <article
             key={deal.id}
             className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md"
@@ -115,7 +157,9 @@ export default function DealsPage() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {deal.category}
                 </p>
-                <h2 className="text-sm font-semibold text-slate-900">{deal.merchantName}</h2>
+                <h2 className="text-sm font-semibold text-slate-900">
+                  {deal.merchantName}
+                </h2>
                 <p className="text-xs text-slate-500">{deal.title}</p>
               </div>
             </div>
@@ -130,7 +174,10 @@ export default function DealsPage() {
                 </code>
               )}
               <span className="text-[0.7rem] text-slate-500">
-                Valid until <span className="font-medium text-slate-700">{deal.validUntil}</span>
+                Valid until{" "}
+                <span className="font-medium text-slate-700">
+                  {deal.validUntil}
+                </span>
               </span>
             </div>
             <div className="mt-4">
@@ -166,8 +213,9 @@ export default function DealsPage() {
             </div>
 
             <p className="mt-4 text-xs text-slate-600">
-              Are you sure you want to redeem this offer now? Some offers may be single‑use and
-              start their validity as soon as you reveal the code.
+              Are you sure you want to redeem this offer now? Some offers may be
+              single‑use and start their validity as soon as you reveal the
+              code.
             </p>
 
             <div className="mt-5 space-y-3">
@@ -181,13 +229,15 @@ export default function DealsPage() {
               >
                 <span
                   className={`absolute left-0 flex h-9 w-24 items-center justify-center rounded-full bg-orange-03 text-[0.7rem] font-semibold text-slate-950 shadow transition-transform ${
-                    sliderComplete ? 'translate-x-[calc(100%-4.75rem)]' : 'translate-x-0'
+                    sliderComplete
+                      ? "translate-x-[calc(100%-4.75rem)]"
+                      : "translate-x-0"
                   }`}
                 >
                   Slide
                 </span>
                 <span className="mx-auto text-[0.7rem]">
-                  {sliderComplete ? 'Redeemed' : 'Slide to reveal QR & code'}
+                  {sliderComplete ? "Redeemed" : "Slide to reveal QR & code"}
                 </span>
               </button>
             </div>
@@ -199,7 +249,9 @@ export default function DealsPage() {
                     QR
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-900">Show this at checkout</p>
+                    <p className="text-xs font-semibold text-slate-900">
+                      Show this at checkout
+                    </p>
                     <p className="text-[0.7rem] text-slate-600">
                       The QR code and promo code below are now active.
                     </p>
