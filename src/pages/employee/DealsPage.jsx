@@ -114,6 +114,9 @@ export default function DealsPage() {
       next.set(selectedDeal.id, (next.get(selectedDeal.id) || 0) + 1);
       return next;
     });
+    if (selectedDeal.maxTotalRedemptions != null) {
+      setSelectedDealTotalRedeemed((prev) => prev + 1);
+    }
   };
 
   const categories = Array.from(
@@ -151,25 +154,28 @@ export default function DealsPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
+        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-slate-300">
+          Employee catalog
+        </p>
+        <h1 className="text-3xl font-semibold tracking-tight text-white">
           Global reward catalog
         </h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-300">
           1000+ retail gift cards and prepaid offers, physical and online
           options.
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 shadow-[0_20px_60px_-40px_rgba(0,0,0,0.65)] backdrop-blur-xl">
         {/* Categories Filter */}
         <div className="flex flex-wrap gap-2 text-[0.7rem] text-slate-600">
           <button
             key="all"
             type="button"
-            className={`inline-flex items-center rounded-full px-3 py-1 font-medium transition ${
+            className={`inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
               selectedCategory === null
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                ? "bg-white text-slate-900 ring-white/40"
+                : "bg-white/10 text-white ring-white/20 hover:bg-white/15"
             }`}
             onClick={() => setSelectedCategory(null)}
           >
@@ -179,10 +185,10 @@ export default function DealsPage() {
             <button
               key={category}
               type="button"
-              className={`inline-flex items-center rounded-full px-3 py-1 font-medium transition ${
+              className={`inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 selectedCategory === category
-                  ? "bg-slate-900 text-white"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  ? "bg-white text-slate-900 ring-white/40"
+                  : "bg-white/10 text-white ring-white/20 hover:bg-white/15"
               }`}
               onClick={() => setSelectedCategory(category)}
             >
@@ -190,16 +196,16 @@ export default function DealsPage() {
             </button>
           ))}
         </div>
-        <div className="ml-auto flex w-full flex-col gap-2 text-xs text-slate-500 sm:w-auto sm:flex-row sm:items-center">
+        <div className="ml-auto flex w-full flex-col gap-2 text-xs text-slate-200 sm:w-auto sm:flex-row sm:items-center">
           <input
             type="search"
             placeholder="Search brands"
-            className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-48"
+            className="w-full rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs text-white placeholder:text-slate-300 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-48"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <select
-            className="w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-40"
+            className="w-full rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs text-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-40"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -220,43 +226,42 @@ export default function DealsPage() {
             return (
               <article
                 key={deal.id}
-                className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md"
-                onClick={() => openRedeemModal(deal)}
+                className="group flex flex-col justify-between rounded-3xl border border-white/20 bg-white/10 p-4 shadow-[0_30px_80px_-60px_rgba(0,0,0,0.8)] backdrop-blur-xl transition will-change-transform hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-[0_35px_90px_-60px_rgba(0,0,0,0.85)]"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-xs font-semibold text-white ring-1 ring-white/20">
                     {deal.merchantName[0]}
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-slate-300">
                       {deal.category}
                     </p>
-                    <h2 className="text-sm font-semibold text-slate-900">
+                    <h2 className="text-sm font-semibold text-white">
                       {deal.merchantName}
                     </h2>
-                    <p className="text-xs text-slate-500">{deal.title}</p>
+                    <p className="text-xs text-slate-200">{deal.title}</p>
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[0.7rem] text-slate-500">
-                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-800">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[0.7rem] text-slate-200">
+                  <span className="inline-flex items-center rounded-full bg-white/10 px-2 py-0.5 font-semibold text-white ring-1 ring-white/15">
                     {deal.discount} off
                   </span>
                   {deal.code && (
-                    <code className="rounded-md bg-slate-900 px-2 py-0.5 font-mono text-[0.7rem] text-white">
+                    <code className="rounded-md bg-slate-950/60 px-2 py-0.5 font-mono text-[0.7rem] text-white ring-1 ring-white/10">
                       {deal.code}
                     </code>
                   )}
-                  <span className="text-[0.7rem] text-slate-500">
+                  <span className="text-[0.7rem] text-slate-300">
                     Valid until{" "}
-                    <span className="font-medium text-slate-700">
+                    <span className="font-medium text-slate-100">
                       {deal.validUntil}
                     </span>
                   </span>
                 </div>
                 <div className="mt-4">
                   {limitReached ? (
-                    <div className="inline-flex w-full items-center justify-center rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                    <div className="inline-flex w-full items-center justify-center rounded-full bg-emerald-400/15 px-3 py-2 text-xs font-semibold text-emerald-100 ring-1 ring-emerald-400/25">
                       {maxPerUser
                         ? `Redeemed ${userCount}/${maxPerUser}`
                         : "Redeemed"}
@@ -264,10 +269,14 @@ export default function DealsPage() {
                   ) : (
                     <button
                       type="button"
-                      className="inline-flex w-full items-center justify-center rounded-full bg-orange-03 px-4 py-2 text-xs font-semibold text-black shadow hover:bg-[--color-orange-05]"
+                      className={`!text-primary inline-flex w-full items-center justify-center rounded-full px-4 py-2 text-xs font-bold tracking-wide shadow-lg transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+                        userCount > 0
+                          ? "bg-gradient-to-r from-[--color-orange-02] to-[--color-orange-04] text-slate-950 ring-1 ring-white/25 shadow-[0_18px_45px_-28px_rgba(255,186,0,0.95)] hover:from-[--color-orange-01] hover:to-[--color-orange-04]"
+                          : "bg-gradient-to-r from-[--color-orange-03] to-[--color-orange-04] text-slate-950 shadow-black/20 hover:from-[--color-orange-02] hover:to-[--color-orange-04]"
+                      }`}
                       onClick={() => openRedeemModal(deal)}
                     >
-                      {userCount > 0 ? "Redeem again" : "Redeem offer"} {limitReached ? " (Fully Redeemed)" : ""}
+                      {userCount > 0 ? "Redeem again" : "Redeem offer"}
                     </button>
                   )}
                 </div>
@@ -278,8 +287,8 @@ export default function DealsPage() {
       </div>
 
       {selectedDeal && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/60 px-4 backdrop-blur-sm animate-[fadeIn_160ms_ease-out]">
+          <div className="w-full max-w-sm rounded-3xl border border-white/25 bg-white/85 p-5 shadow-2xl backdrop-blur-xl animate-[fadeScaleIn_180ms_ease-out]">
             <div className="space-y-2">
               <p className="text-[0.7rem] font-medium uppercase tracking-[0.25em] text-slate-500">
                 Confirm redemption
