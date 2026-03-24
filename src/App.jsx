@@ -14,11 +14,15 @@ import EditDealPage from './pages/merchant/EditDealPage';
 import MerchantDashboardPage from './pages/merchant/MerchantDashboardPage';
 import './App.css';
 
+// Must match vite `base` (e.g. /employee-discount-app/ on GitHub Pages)
+const routerBasename =
+  import.meta.env.BASE_URL === "/" ? undefined : import.meta.env.BASE_URL.replace(/\/$/, "");
+
 export default function App() {
   return (
     <AuthProvider>
       <DealsProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={routerBasename}>
           <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<HomePage />} />
