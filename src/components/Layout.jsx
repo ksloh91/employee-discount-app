@@ -58,7 +58,13 @@ export default function Layout() {
                   to="/corporate/invitations"
                   className="rounded-full px-3 py-1 hover:text-primary"
                 >
-                  Invite employees
+                  Invite Employees
+                </Link>
+                <Link
+                  to="/corporate/employees"
+                  className="rounded-full px-3 py-1 hover:text-primary"
+                >
+                  Employees
                 </Link>
               </>
             )}

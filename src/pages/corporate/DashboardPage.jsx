@@ -14,6 +14,9 @@ function isoToMs(value) {
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [employeeCount, setEmployeeCount] = useState(0);
+  const [activeEmployeeCount, setActiveEmployeeCount] = useState(0);
+  const [suspendedEmployeeCount, setSuspendedEmployeeCount] = useState(0);
+  const [pendingInviteCount, setPendingInviteCount] = useState(0);
   const [merchantCount, setMerchantCount] = useState(0);
   const [redemptions, setRedemptions] = useState([]);
 
@@ -21,13 +24,20 @@ export default function DashboardPage() {
     const load = async () => {
       setLoading(true);
       try {
-        const [employeesSnap, merchantsSnap, redemptionsSnap] = await Promise.all([
+        const [employeesSnap, merchantsSnap, redemptionsSnap, invitationsSnap] = await Promise.all([
           getDocs(query(collection(db, "users"), where("role", "==", "employee"))),
           getDocs(query(collection(db, "users"), where("role", "==", "merchant"))),
           getDocs(collection(db, "redemptions")),
+          getDocs(query(collection(db, "invitations"), where("status", "==", "pending"))),
         ]);
 
-        setEmployeeCount(employeesSnap.size);
+        const employees = employeesSnap.docs.map((d) => d.data());
+        const suspended = employees.filter((e) => e.status === "suspended").length;
+        const active = employees.length - suspended;
+        setEmployeeCount(employees.length);
+        setActiveEmployeeCount(active);
+        setSuspendedEmployeeCount(suspended);
+        setPendingInviteCount(invitationsSnap.size);
         setMerchantCount(merchantsSnap.size);
         setRedemptions(redemptionsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
       } catch (error) {
@@ -63,7 +73,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
           <p className="text-xs font-medium text-slate-400">Employees signed up</p>
-          <p className="mt-2 text-2xl font-semibold text-primary">
+          <p className="mt-2 text-2xl font-semibold text-secondary">
             {loading ? "—" : employeeCount}
           </p>
         </div>
@@ -77,6 +87,26 @@ export default function DashboardPage() {
           <p className="text-xs font-medium text-slate-400">Participating merchants</p>
           <p className="mt-2 text-2xl font-semibold text-secondary">
             {loading ? "—" : merchantCount}
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+          <p className="text-xs font-medium text-slate-400">Active employees</p>
+          <p className="mt-2 text-2xl font-semibold text-emerald-300">
+            {loading ? "—" : activeEmployeeCount}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+          <p className="text-xs font-medium text-slate-400">Suspended employees</p>
+          <p className="mt-2 text-2xl font-semibold text-amber-300">
+            {loading ? "—" : suspendedEmployeeCount}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+          <p className="text-xs font-medium text-slate-400">Pending invitations</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-100">
+            {loading ? "—" : pendingInviteCount}
           </p>
         </div>
       </div>

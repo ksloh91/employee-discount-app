@@ -94,6 +94,7 @@ export function AuthProvider({ children }) {
 
     await setDoc(doc(db, 'users', credential.user.uid), {
       role: 'employee',
+      status: 'active',
       email: credential.user.email || normalizedEmail,
       displayName: credential.user.email || normalizedEmail,
       createdAt: serverTimestamp(),
