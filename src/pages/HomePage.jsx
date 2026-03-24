@@ -19,12 +19,18 @@ export default function HomePage() {
             subscribed companies.
           </p>
           {!user ? (
-            <div className="mt-6 flex justify-center">
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
                 to="/login"
                 className="inline-flex items-center rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800"
               >
-                Log in to view deals
+                Log in
+              </Link>
+              <Link
+                to="/signup"
+                className="inline-flex items-center rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-800 hover:border-primary hover:text-primary"
+              >
+                Employee sign up
               </Link>
             </div>
           ) : (

@@ -19,7 +19,8 @@ export default function Layout() {
               to="/"
               className="text-lg font-semibold tracking-tight text-slate-900 hover:text-primary"
             >
-              Perkaholics Employee Discounts
+              <img src="/images/logo.png" alt="logo" className="w-26" />
+              {/* Perkaholics Employee Discounts */}
             </Link>
 
             {user && (
@@ -46,12 +47,20 @@ export default function Layout() {
               </>
             )}
             {user?.role === "corporate" && (
-              <Link
-                to="/corporate/dashboard"
-                className="rounded-full px-3 py-1 hover:text-primary"
-              >
-                Dashboard
-              </Link>
+              <>
+                <Link
+                  to="/corporate/dashboard"
+                  className="rounded-full px-3 py-1 hover:text-primary"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/corporate/invitations"
+                  className="rounded-full px-3 py-1 hover:text-primary"
+                >
+                  Invite employees
+                </Link>
+              </>
             )}
             {user?.role === "merchant" && (
               <>
