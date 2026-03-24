@@ -22,6 +22,12 @@
   --color-delete-03: #ff9999; /* primary */
   --color-delete-04: #ff7777; /* darker */
   --color-delete-05: #ff5555; /* darkest */
+
+  /* Shared premium surfaces */
+  --app-surface-01: rgba(15, 23, 42, 0.72);
+  --app-surface-02: rgba(15, 23, 42, 0.9);
+  --app-border-soft: rgba(255, 255, 255, 0.12);
+  --app-shadow-lg: 0 24px 55px -30px rgba(2, 6, 23, 0.85);
 }
 
 @keyframes fadeScaleIn {
@@ -41,6 +47,69 @@
   }
   to {
     opacity: 1;
+  }
+}
+
+/* Employee nav tutorial — mobile-style sheet */
+@keyframes tutorial-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tutorial-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes tutorial-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(110%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tutorial-sheet-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(110%);
+  }
+}
+
+@keyframes tutorial-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--tutorial-dx, 18px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-motion-backdrop-in,
+  .tutorial-motion-backdrop-out,
+  .tutorial-motion-sheet-in,
+  .tutorial-motion-sheet-out,
+  .tutorial-motion-step {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 
@@ -160,9 +229,17 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at 18% 8%, rgba(255, 186, 0, 0.09), transparent 28%),
+      radial-gradient(circle at 86% 1%, rgba(99, 102, 241, 0.14), transparent 34%);
   }
   html {
     @apply font-sans;
+  }
+
+  ::selection {
+    background: rgba(255, 186, 0, 0.35);
+    color: #f8fafc;
   }
 }

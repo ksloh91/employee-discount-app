@@ -153,20 +153,20 @@ export default function DealsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
+      <div className="rounded-3xl border border-white/10 bg-slate-900/55 p-5 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
         <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-slate-300">
           Employee catalog
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">
           Global reward catalog
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="mt-1 text-sm text-slate-300">
           1000+ retail gift cards and prepaid offers, physical and online
           options.
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 shadow-[0_20px_60px_-40px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+      <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/65 px-4 py-3 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
         {/* Categories Filter */}
         <div className="flex flex-wrap gap-2 text-[0.7rem] text-slate-600">
           <button
@@ -174,8 +174,8 @@ export default function DealsPage() {
             type="button"
             className={`inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
               selectedCategory === null
-                ? "bg-white text-slate-900 ring-white/40"
-                : "bg-white/10 text-white ring-white/20 hover:bg-white/15"
+                ? "bg-amber-300/15 text-amber-100 ring-amber-300/45"
+                : "bg-white/6 text-slate-200 ring-white/15 hover:bg-white/12"
             }`}
             onClick={() => setSelectedCategory(null)}
           >
@@ -187,8 +187,8 @@ export default function DealsPage() {
               type="button"
               className={`inline-flex items-center rounded-full px-3 py-1 font-semibold ring-1 ring-inset transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 selectedCategory === category
-                  ? "bg-white text-slate-900 ring-white/40"
-                  : "bg-white/10 text-white ring-white/20 hover:bg-white/15"
+                  ? "bg-amber-300/15 text-amber-100 ring-amber-300/45"
+                  : "bg-white/6 text-slate-200 ring-white/15 hover:bg-white/12"
               }`}
               onClick={() => setSelectedCategory(category)}
             >
@@ -200,12 +200,12 @@ export default function DealsPage() {
           <input
             type="search"
             placeholder="Search brands"
-            className="w-full rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs text-white placeholder:text-slate-300 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-48"
+            className="w-full rounded-full border border-white/15 bg-slate-800/65 px-3 py-1.5 text-xs text-white placeholder:text-slate-400 focus:border-amber-300/75 focus:outline-none focus:ring-1 focus:ring-amber-300/70 sm:w-48"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <select
-            className="w-full rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs text-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:w-40"
+            className="w-full rounded-full border border-white/15 bg-slate-800/65 px-3 py-1.5 text-xs text-white focus:border-amber-300/75 focus:outline-none focus:ring-1 focus:ring-amber-300/70 sm:w-40"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -216,6 +216,14 @@ export default function DealsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
+        {filteredDeals.length === 0 ? (
+          <div className="md:col-span-3 rounded-3xl border border-white/10 bg-slate-900/60 p-6 text-center shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
+            <p className="text-sm font-semibold text-white">No matching deals found</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Try another category, or clear search.
+            </p>
+          </div>
+        ) : null}
         {filteredDeals.map((deal) =>
           // per-user redemption count for this deal
           (() => {
@@ -226,10 +234,10 @@ export default function DealsPage() {
             return (
               <article
                 key={deal.id}
-                className="group flex flex-col justify-between rounded-3xl border border-white/20 bg-white/10 p-4 shadow-[0_30px_80px_-60px_rgba(0,0,0,0.8)] backdrop-blur-xl transition will-change-transform hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-[0_35px_90px_-60px_rgba(0,0,0,0.85)]"
+                className="group flex flex-col justify-between rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl transition duration-200 will-change-transform hover:-translate-y-0.5 hover:border-white/20 hover:bg-slate-900/75"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-xs font-semibold text-white ring-1 ring-white/20">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/8 text-xs font-semibold text-white ring-1 ring-white/20">
                     {deal.merchantName[0]}
                   </div>
                   <div className="space-y-0.5">
@@ -244,11 +252,11 @@ export default function DealsPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[0.7rem] text-slate-200">
-                  <span className="inline-flex items-center rounded-full bg-white/10 px-2 py-0.5 font-semibold text-white ring-1 ring-white/15">
+                  <span className="inline-flex items-center rounded-full bg-amber-300/10 px-2 py-0.5 font-semibold text-amber-100 ring-1 ring-amber-300/35">
                     {deal.discount} off
                   </span>
                   {deal.code && (
-                    <code className="rounded-md bg-slate-950/60 px-2 py-0.5 font-mono text-[0.7rem] text-white ring-1 ring-white/10">
+                    <code className="rounded-md bg-slate-950/70 px-2 py-0.5 font-mono text-[0.7rem] text-white ring-1 ring-white/10">
                       {deal.code}
                     </code>
                   )}
@@ -269,7 +277,7 @@ export default function DealsPage() {
                   ) : (
                     <button
                       type="button"
-                      className={`!text-primary inline-flex w-full items-center justify-center rounded-full px-4 py-2 text-xs font-bold tracking-wide shadow-lg transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+                      className={`!text-white inline-flex w-full items-center justify-center rounded-full px-4 py-2 text-xs font-bold tracking-wide shadow-lg transition active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
                         userCount > 0
                           ? "bg-gradient-to-r from-[--color-orange-02] to-[--color-orange-04] text-slate-950 ring-1 ring-white/25 shadow-[0_18px_45px_-28px_rgba(255,186,0,0.95)] hover:from-[--color-orange-01] hover:to-[--color-orange-04]"
                           : "bg-gradient-to-r from-[--color-orange-03] to-[--color-orange-04] text-slate-950 shadow-black/20 hover:from-[--color-orange-02] hover:to-[--color-orange-04]"
@@ -287,51 +295,51 @@ export default function DealsPage() {
       </div>
 
       {selectedDeal && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/60 px-4 backdrop-blur-sm animate-[fadeIn_160ms_ease-out]">
-          <div className="w-full max-w-sm rounded-3xl border border-white/25 bg-white/85 p-5 shadow-2xl backdrop-blur-xl animate-[fadeScaleIn_180ms_ease-out]">
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm animate-[fadeIn_160ms_ease-out]">
+          <div className="w-full max-w-sm rounded-3xl border border-white/15 bg-slate-900/92 p-5 shadow-2xl backdrop-blur-xl animate-[fadeScaleIn_180ms_ease-out]">
             <div className="space-y-2">
-              <p className="text-[0.7rem] font-medium uppercase tracking-[0.25em] text-slate-500">
+              <p className="text-[0.7rem] font-medium uppercase tracking-[0.25em] text-slate-400">
                 Confirm redemption
               </p>
-              <h2 className="text-lg font-semibold tracking-tight text-slate-900">
+              <h2 className="text-lg font-semibold tracking-tight text-white">
                 {selectedDeal.merchantName}
               </h2>
-              <p className="text-xs text-slate-600">{selectedDeal.title}</p>
+              <p className="text-xs text-slate-300">{selectedDeal.title}</p>
             </div>
 
-            <p className="mt-4 text-xs text-slate-600">
+            <p className="mt-4 text-xs text-slate-300">
               Are you sure you want to redeem this offer now? Some offers may be
               single‑use and start their validity as soon as you reveal the
               code.
             </p>
 
             <div className="mt-5 space-y-3">
-              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
                 Slide to redeem
               </p>
-              <p className="text-[0.7rem] text-slate-500">
+              <p className="text-[0.7rem] text-slate-400">
                 Redeemed by you:{" "}
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-slate-100">
                   {redeemedCounts.get(selectedDeal.id) || 0}
                 </span>
                 {selectedDeal.maxPerUserRedemptions != null && (
                   <>
                     {" "}
                     /{" "}
-                    <span className="font-semibold text-slate-700">
+                    <span className="font-semibold text-slate-100">
                       {selectedDeal.maxPerUserRedemptions}
                     </span>
                   </>
                 )}
               </p>
               {selectedDeal.maxTotalRedemptions != null && (
-                <p className="text-[0.7rem] text-slate-500">
+                <p className="text-[0.7rem] text-slate-400">
                   Total redeemed:{" "}
-                  <span className="font-semibold text-slate-700">
+                  <span className="font-semibold text-slate-100">
                     {selectedDealTotalRedeemed}
                   </span>{" "}
                   /{" "}
-                  <span className="font-semibold text-slate-700">
+                  <span className="font-semibold text-slate-100">
                     {selectedDeal.maxTotalRedemptions}
                   </span>
                 </p>
@@ -360,16 +368,16 @@ export default function DealsPage() {
                     </p>
                   )}
                   {checkingLimits && (
-                    <p className="mt-2 text-xs text-slate-500">Checking limits…</p>
+                    <p className="mt-2 text-xs text-slate-400">Checking limits…</p>
                   )}
                   <button
                     type="button"
                     disabled={checkingLimits || fullyRedeemed}
                     onClick={handleSliderActivate}
-                    className={`mt-3 relative flex h-10 w-full items-center rounded-full text-xs font-medium shadow-inner transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+                    className={`mt-3 relative flex h-10 w-full items-center rounded-full text-xs font-medium shadow-inner transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
                       fullyRedeemed
-                        ? "bg-slate-200 text-slate-500 cursor-not-allowed"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        ? "cursor-not-allowed bg-slate-700 text-slate-300"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                     }`}
                   >
                     <span
@@ -394,22 +402,22 @@ export default function DealsPage() {
             })()}
 
             {sliderComplete && (
-              <div className="mt-5 space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mt-5 space-y-3 rounded-2xl border border-white/10 bg-slate-800/70 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-white text-[0.6rem] font-semibold text-slate-500 ring-1 ring-dashed ring-slate-300">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-900 text-[0.6rem] font-semibold text-slate-300 ring-1 ring-dashed ring-slate-500">
                     QR
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-900">
+                    <p className="text-xs font-semibold text-slate-100">
                       Show this at checkout
                     </p>
-                    <p className="text-[0.7rem] text-slate-600">
+                    <p className="text-[0.7rem] text-slate-300">
                       The QR code and promo code below are now active.
                     </p>
                   </div>
                 </div>
                 {selectedDeal.code && (
-                  <div className="mt-2 rounded-lg bg-slate-900 px-3 py-2 text-center">
+                  <div className="mt-2 rounded-lg bg-slate-950 px-3 py-2 text-center ring-1 ring-white/10">
                     <p className="text-[0.65rem] font-medium uppercase tracking-[0.25em] text-slate-400">
                       Promo code
                     </p>
@@ -424,7 +432,7 @@ export default function DealsPage() {
             <div className="mt-5 flex justify-end gap-2 text-xs">
               <button
                 type="button"
-                className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700"
+                className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-white"
                 onClick={closeRedeemModal}
               >
                 Close
