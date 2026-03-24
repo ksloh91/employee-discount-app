@@ -1,6 +1,23 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  createUserWithEmailAndPassword,
+} from 'firebase/auth';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import { app, db } from '../lib/firebase';
 
 const AuthContext = createContext(null);
@@ -50,8 +67,49 @@ export function AuthProvider({ children }) {
     return signOut(auth).then(() => setUser(null));
   };
 
+  // Employee sign-up is gated by pending invitations.
+  const registerWithInvitation = async (email, password) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const invitationQuery = query(
+      collection(db, 'invitations'),
+      where('email', '==', normalizedEmail),
+      where('status', '==', 'pending'),
+      limit(1),
+    );
+    const invitationSnap = await getDocs(invitationQuery);
+    if (invitationSnap.empty) {
+      const err = new Error(
+        'No invitation found for this email. Ask your employer to send you an invitation.',
+      );
+      err.code = 'no-invitation';
+      throw err;
+    }
+
+    const invitationDoc = invitationSnap.docs[0];
+    const credential = await createUserWithEmailAndPassword(
+      auth,
+      email.trim(),
+      password,
+    );
+
+    await setDoc(doc(db, 'users', credential.user.uid), {
+      role: 'employee',
+      email: credential.user.email || normalizedEmail,
+      displayName: credential.user.email || normalizedEmail,
+      createdAt: serverTimestamp(),
+    });
+
+    await updateDoc(doc(db, 'invitations', invitationDoc.id), {
+      status: 'accepted',
+      acceptedAt: serverTimestamp(),
+      acceptedBy: credential.user.uid,
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, logout, registerWithInvitation }}
+    >
       {children}
     </AuthContext.Provider>
   );
