@@ -49,7 +49,9 @@ export default function LoginPage() {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Log in</h1>
           <p className="text-xs text-slate-500">
-            Use one of the test accounts configured in Firebase Auth.
+            Use an account created in Firebase Auth. See{" "}
+            <code className="rounded bg-slate-100 px-1 py-0.5 text-[0.65rem]">docs/CORPORATE_LOGIN_SETUP.md</code>{" "}
+            for corporate login, or <code className="rounded bg-slate-100 px-1 py-0.5 text-[0.65rem]">docs/MERCHANT_LOGIN_SETUP.md</code> for merchant.
           </p>
         </div>
         <form className="space-y-4" onSubmit={handleSubmit}>

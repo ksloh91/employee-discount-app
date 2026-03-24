@@ -5,9 +5,11 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import SignUpPage from './pages/SignUpPage';
 import DealsPage from './pages/employee/DealsPage';
 import MyRedemptionsPage from './pages/employee/MyRedemptionsPage';
 import DashboardPage from './pages/corporate/DashboardPage';
+import InvitationsPage from './pages/corporate/InvitationsPage';
 import MyDealsPage from './pages/merchant/MyDealsPage';
 import AddDealsPage from './pages/merchant/AddDealsPage';
 import EditDealPage from './pages/merchant/EditDealPage';
@@ -23,6 +25,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
               <Route
                 path="/employee/deals"
                 element={
@@ -44,6 +47,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['corporate']}>
                     <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/corporate/invitations"
+                element={
+                  <ProtectedRoute allowedRoles={['corporate']}>
+                    <InvitationsPage />
                   </ProtectedRoute>
                 }
               />

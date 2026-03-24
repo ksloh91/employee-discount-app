@@ -46,12 +46,20 @@ export default function Layout() {
               </>
             )}
             {user?.role === "corporate" && (
-              <Link
-                to="/corporate/dashboard"
-                className="rounded-full px-3 py-1 hover:text-primary"
-              >
-                Dashboard
-              </Link>
+              <>
+                <Link
+                  to="/corporate/dashboard"
+                  className="rounded-full px-3 py-1 hover:text-primary"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/corporate/invitations"
+                  className="rounded-full px-3 py-1 hover:text-primary"
+                >
+                  Invite employees
+                </Link>
+              </>
             )}
             {user?.role === "merchant" && (
               <>

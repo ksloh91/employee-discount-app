@@ -1,6 +1,24 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  createUserWithEmailAndPassword,
+} from 'firebase/auth';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  getDocs,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  updateDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { app, db } from '../lib/firebase';
 
 const AuthContext = createContext(null);
@@ -50,8 +68,43 @@ export function AuthProvider({ children }) {
     return signOut(auth).then(() => setUser(null));
   };
 
+  /**
+   * Register a new employee only if they have a pending invitation.
+   * Creates Firebase Auth user, Firestore user profile (role: employee), and marks invitation accepted.
+   */
+  const registerWithInvitation = async (email, password) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const invRef = collection(db, 'invitations');
+    const q = query(
+      invRef,
+      where('email', '==', normalizedEmail),
+      where('status', '==', 'pending'),
+      limit(1),
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      const err = new Error('No invitation found for this email. Ask your employer to send you an invitation.');
+      err.code = 'no-invitation';
+      throw err;
+    }
+    const invDoc = snap.docs[0];
+    const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+    const { uid } = credential.user;
+    await setDoc(doc(db, 'users', uid), {
+      role: 'employee',
+      email: credential.user.email,
+      displayName: credential.user.email || normalizedEmail,
+    });
+    await updateDoc(doc(db, 'invitations', invDoc.id), {
+      status: 'accepted',
+      acceptedAt: serverTimestamp(),
+      acceptedBy: uid,
+    });
+    return credential;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, registerWithInvitation }}>
       {children}
     </AuthContext.Provider>
   );
