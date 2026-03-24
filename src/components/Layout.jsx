@@ -54,12 +54,20 @@ export default function Layout() {
               </Link>
             )}
             {user?.role === "merchant" && (
-              <Link
-                to="/merchant/deals"
-                className="rounded-full px-3 py-1 hover:text-primary"
-              >
-                My Deals
-              </Link>
+              <>
+                <Link
+                  to="/merchant/deals"
+                  className="rounded-full px-3 py-1 hover:text-primary"
+                >
+                  My Deals
+                </Link>
+                <Link
+                  to="/merchant/dashboard"
+                  className="rounded-full px-3 py-1 hover:text-primary"
+                >
+                  Dashboard
+                </Link>
+              </>
             )}
             {user ? (
               <button
