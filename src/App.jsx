@@ -9,6 +9,7 @@ import DealsPage from './pages/employee/DealsPage';
 import MyRedemptionsPage from './pages/employee/MyRedemptionsPage';
 import DashboardPage from './pages/corporate/DashboardPage';
 import InvitationsPage from './pages/corporate/InvitationsPage';
+import EmployeesPage from './pages/corporate/EmployeesPage';
 import MyDealsPage from './pages/merchant/MyDealsPage';
 import AddDealsPage from './pages/merchant/AddDealsPage';
 import EditDealPage from './pages/merchant/EditDealPage';
@@ -59,6 +60,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowedRoles={['corporate']}>
                     <InvitationsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/corporate/employees"
+                element={
+                  <ProtectedRoute allowedRoles={['corporate']}>
+                    <EmployeesPage />
                   </ProtectedRoute>
                 }
               />
