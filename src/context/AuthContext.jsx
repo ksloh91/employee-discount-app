@@ -19,6 +19,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { app, db } from '../lib/firebase';
+import { employeeNavTutorialStorageKey } from '../lib/employeeNavTutorialStorage';
 
 const AuthContext = createContext(null);
 
@@ -64,6 +65,14 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    const uid = auth.currentUser?.uid;
+    if (uid) {
+      try {
+        localStorage.removeItem(employeeNavTutorialStorageKey(uid));
+      } catch {
+        /* ignore private mode / quota */
+      }
+    }
     return signOut(auth).then(() => setUser(null));
   };
 
