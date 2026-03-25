@@ -15,8 +15,8 @@ import {
 const desktopNavLinkClass = ({ isActive }) =>
   `inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold tracking-tight transition-all duration-200 ${
     isActive
-      ? "border-amber-300/70 bg-amber-300/10 text-amber-200 shadow-[0_10px_25px_-16px_rgba(255,186,0,0.8)]"
-      : "border-transparent text-slate-300 hover:border-white/15 hover:bg-white/7 hover:text-white"
+      ? "border-amber-500/80 bg-amber-400/30 text-slate-900 shadow-sm ring-1 ring-amber-500/25"
+      : "border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-900/[0.06] hover:text-slate-900"
   }`;
 
 const mobileTabClass =
@@ -33,12 +33,12 @@ export default function Layout() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[radial-gradient(circle_at_12%_20%,rgba(255,186,0,0.2),transparent_35%),radial-gradient(circle_at_88%_0%,rgba(99,102,241,0.28),transparent_38%),linear-gradient(180deg,#020617_0%,#0b1120_48%,#020617_100%)] text-slate-100">
-      <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/65 shadow-[0_20px_40px_-28px_rgba(2,6,23,0.95)] backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-slate-200/90 !bg-[#EFF4FB] shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3.5">
           <div className="flex flex-col items-start gap-0">
             <Link
               to="/"
-              className="text-lg font-semibold tracking-tight text-white transition hover:opacity-90"
+              className="text-lg font-semibold tracking-tight text-slate-900 transition hover:opacity-90"
             >
               <img
                 src={`${import.meta.env.BASE_URL}images/logo.png`}
@@ -49,7 +49,7 @@ export default function Layout() {
             </Link>
 
             {user && (
-              <div className="max-w-[180px] truncate text-xs text-slate-400 sm:max-w-none sm:text-sm">
+              <div className="max-w-[180px] truncate text-xs text-slate-600 sm:max-w-none sm:text-sm">
                 Logged in as {user.displayName}
               </div>
             )}
@@ -120,7 +120,7 @@ export default function Layout() {
             {user ? (
               <button
                 type="button"
-                className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:border-amber-300/55 hover:bg-amber-300/10 hover:text-amber-200"
+                className="inline-flex items-center rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-amber-500/55 hover:bg-amber-50 hover:text-slate-900"
                 onClick={handleLogout}
               >
                 Log out
@@ -138,7 +138,7 @@ export default function Layout() {
           {user ? (
             <button
               type="button"
-              className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-100 transition hover:border-amber-300/55 hover:bg-amber-300/10 sm:hidden"
+              className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-amber-500/55 hover:bg-amber-50 sm:hidden"
               onClick={handleLogout}
             >
               Log out
