@@ -51,23 +51,23 @@ export default function HomePage() {
         </div>
       </section>
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900">Who uses this?</h2>
+        <h2 className="text-lg font-semibold text-slate-100">Who uses this?</h2>
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-900">Employees</h3>
-            <p className="mt-1 text-xs text-slate-600">
+          <div className="rounded-2xl border border-white/10 bg-slate-900/55 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
+            <h3 className="text-sm font-semibold text-white">Employees</h3>
+            <p className="mt-1 text-xs text-slate-400">
               Browse and redeem exclusive discounts from partner merchants.
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-900">Corporates</h3>
-            <p className="mt-1 text-xs text-slate-600">
+          <div className="rounded-2xl border border-white/10 bg-slate-900/55 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
+            <h3 className="text-sm font-semibold text-white">Corporates</h3>
+            <p className="mt-1 text-xs text-slate-400">
               Subscribe to offer the program as a benefit to your workforce.
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-900">Merchants</h3>
-            <p className="mt-1 text-xs text-slate-600">
+          <div className="rounded-2xl border border-white/10 bg-slate-900/55 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
+            <h3 className="text-sm font-semibold text-white">Merchants</h3>
+            <p className="mt-1 text-xs text-slate-400">
               Reach engaged employees with targeted offers and grow your customer base.
             </p>
           </div>

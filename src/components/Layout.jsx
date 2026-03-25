@@ -40,7 +40,11 @@ export default function Layout() {
               to="/"
               className="text-lg font-semibold tracking-tight text-white transition hover:opacity-90"
             >
-              <img src="/images/logo.png" alt="logo" className="w-24 sm:w-26" />
+              <img
+                src={`${import.meta.env.BASE_URL}images/logo.png`}
+                alt="Perkaholics"
+                className="w-24 sm:w-26"
+              />
               {/* Perkaholics Employee Discounts */}
             </Link>
 
