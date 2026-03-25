@@ -9,8 +9,7 @@ import {
   Ticket,
   X,
 } from "lucide-react";
-
-const STORAGE_VERSION = "v1";
+import { employeeNavTutorialStorageKey } from "../lib/employeeNavTutorialStorage";
 
 function buildSteps() {
   return [
@@ -20,7 +19,7 @@ function buildSteps() {
       title: "Welcome",
       subtitle: "Here’s a quick tour",
       body: "Perkaholics is easiest on your phone. Use the bottom bar like an app to move between Home, your deals, past redemptions, and sign out.",
-      hint: "You can skip anytime — we won’t show this again for your account.",
+      hint: "You can skip anytime — after you sign out and back in, we’ll offer this tour again.",
     },
     {
       key: "home",
@@ -59,7 +58,7 @@ function buildSteps() {
 
 export default function EmployeeNavTutorial({ userId }) {
   const storageKey = useMemo(
-    () => `employeeNavTutorial:${STORAGE_VERSION}:${userId}`,
+    () => employeeNavTutorialStorageKey(userId),
     [userId],
   );
 
