@@ -92,8 +92,8 @@ export default function EmployeesPage() {
       ) : filteredEmployees.length === 0 ? (
         <p className="text-sm text-slate-500">No employees found.</p>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/50">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-2xl border border-slate-700 bg-slate-900/50">
+          <table className="min-w-[760px] w-full text-left text-sm">
             <thead>
               <tr className="border-b border-slate-700">
                 <th className="px-4 py-3 font-medium text-slate-300">Employee</th>
