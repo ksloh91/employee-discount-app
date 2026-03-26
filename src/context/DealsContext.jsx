@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   collection,
   getDocs,
@@ -10,9 +10,8 @@ import {
   query,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-
-const DealsContext = createContext(null);
+import { db } from "../lib/firebase";
+import { DealsContext } from "./DealsContextInternal";
 
 export function DealsProvider({ children }) {
   const [deals, setDeals] = useState([]);
@@ -47,8 +46,8 @@ export function DealsProvider({ children }) {
   };
 
   const updateDeal = (updatedDeal) => {
-    const ref = doc(db, 'deals', updatedDeal.id);
-    const { id, ...rest } = updatedDeal;
+    const { id: updatedId, ...rest } = updatedDeal;
+    const ref = doc(db, "deals", updatedId);
     return updateDoc(ref, rest).then(() => {
       setDeals((current) =>
         current.map((deal) => (deal.id === updatedDeal.id ? { ...deal, ...updatedDeal } : deal)),
@@ -70,9 +69,6 @@ export function DealsProvider({ children }) {
   );
 }
 
-export function useDeals() {
-  const ctx = useContext(DealsContext);
-  if (!ctx) throw new Error('useDeals must be used within DealsProvider');
-  return ctx;
-}
+// `useDeals` hook lives in `src/context/useDeals.js` to keep this file
+// React-Refresh compliant.
 

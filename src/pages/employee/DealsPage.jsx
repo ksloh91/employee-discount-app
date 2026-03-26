@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { useDeals } from "../../context/DealsContext";
-import { useAuth } from "../../context/AuthContext";
+import { useDeals } from "../../context/useDeals";
+import { useAuth } from "../../context/useAuth";
 import Skeleton from "../../components/Skeleton";
 
 export default function DealsPage() {
@@ -174,7 +174,6 @@ export default function DealsPage() {
         <div className="grid gap-4 md:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
-              // eslint-disable-next-line react/no-array-index-key
               key={i}
               className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl"
             >

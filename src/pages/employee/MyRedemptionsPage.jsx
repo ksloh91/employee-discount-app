@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { useDeals } from '../../context/DealsContext';
-import { useAuth } from '../../context/AuthContext';
+import { useDeals } from '../../context/useDeals';
+import { useAuth } from '../../context/useAuth';
 
 export default function MyRedemptionsPage() {
   const { deals } = useDeals();

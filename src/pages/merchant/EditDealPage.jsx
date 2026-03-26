@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useDeals } from "../../context/DealsContext";
+import { useDeals } from "../../context/useDeals";
 
 export default function EditDealPage() {
   const navigate = useNavigate();

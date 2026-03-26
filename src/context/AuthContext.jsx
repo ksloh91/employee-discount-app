@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   getAuth,
   onAuthStateChanged,
@@ -20,8 +20,7 @@ import {
 } from 'firebase/firestore';
 import { app, db } from '../lib/firebase';
 import { employeeNavTutorialStorageKey } from '../lib/employeeNavTutorialStorage';
-
-const AuthContext = createContext(null);
+import { AuthContext } from "./AuthContextInternal";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -125,8 +124,5 @@ export function AuthProvider({ children }) {
   );
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
-}
+// `useAuth` hook lives in `src/context/useAuth.js` to keep this file
+// React-Refresh compliant.

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import Skeleton from "../../components/Skeleton";
+import { useConfirm } from "../../components/useConfirm";
+import { useToast } from "../../components/useToast";
 
 function tsToDateString(value) {
   if (!value) return "—";
@@ -15,6 +17,8 @@ export default function EmployeesPage() {
   const [savingId, setSavingId] = useState("");
   const [search, setSearch] = useState("");
   const [employees, setEmployees] = useState([]);
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
 
   useEffect(() => {
     const load = async () => {
@@ -51,6 +55,21 @@ export default function EmployeesPage() {
 
   const handleToggleStatus = async (employee) => {
     const nextStatus = employee.status === "suspended" ? "active" : "suspended";
+    const displayName = employee.displayName || employee.email || employee.id;
+    const actionLabel = nextStatus === "suspended" ? "Suspend" : "Reactivate";
+
+    const ok = await confirm({
+      title: `${actionLabel} employee?`,
+      description: `${displayName} will be ${nextStatus === "suspended" ? "suspended" : "reactivated"} and will ${
+        nextStatus === "suspended" ? "lose access" : "regain access"
+      } immediately.`,
+      confirmText: actionLabel,
+      cancelText: "Cancel",
+      variant: nextStatus === "suspended" ? "danger" : "default",
+    });
+
+    if (!ok) return;
+
     setSavingId(employee.id);
     try {
       await updateDoc(doc(db, "users", employee.id), { status: nextStatus });
@@ -59,8 +78,20 @@ export default function EmployeesPage() {
           row.id === employee.id ? { ...row, status: nextStatus } : row,
         ),
       );
+
+      toast({
+        title: "Employee updated",
+        description: `${displayName} is now ${nextStatus}.`,
+        variant: "success",
+      });
     } catch (error) {
       console.error("Failed to update employee status:", error);
+
+      toast({
+        title: "Update failed",
+        description: "We couldn't update the employee status. Please try again.",
+        variant: "error",
+      });
     } finally {
       setSavingId("");
     }

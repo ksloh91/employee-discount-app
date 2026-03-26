@@ -18,8 +18,10 @@ import {
   XCircle,
 } from "lucide-react";
 import { db } from "../../lib/firebase";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import Skeleton from "../../components/Skeleton";
+import { useConfirm } from "../../components/useConfirm";
+import { useToast } from "../../components/useToast";
 
 function formatDate(value) {
   if (!value) return "—";
@@ -35,9 +37,9 @@ export default function InvitationsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [actioningId, setActioningId] = useState("");
   const [activeTab, setActiveTab] = useState("pending");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [invitations, setInvitations] = useState([]);
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -59,13 +61,17 @@ export default function InvitationsPage() {
         setInvitations(rows);
       } catch (e) {
         console.error("Error loading invitations:", e);
-        setError("Failed to load invitations.");
+        toast({
+          title: "Load failed",
+          description: "Failed to load invitations. Please refresh.",
+          variant: "error",
+        });
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [user?.uid]);
+  }, [user?.uid, toast]);
 
   const invitationCounts = useMemo(() => {
     const pending = invitations.filter((inv) => inv.status === "pending").length;
@@ -81,12 +87,14 @@ export default function InvitationsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     const normalized = email.trim().toLowerCase();
     if (!normalized) {
-      setError("Please enter an email address.");
+      toast({
+        title: "Can't send invitation",
+        description: "Please enter an email address.",
+        variant: "error",
+      });
       return;
     }
 
@@ -94,7 +102,11 @@ export default function InvitationsPage() {
       (inv) => inv.email === normalized && inv.status === "pending",
     );
     if (alreadyPending) {
-      setError("A pending invitation for this email already exists.");
+      toast({
+        title: "Invitation already pending",
+        description: "A pending invitation for this email already exists.",
+        variant: "error",
+      });
       return;
     }
 
@@ -117,19 +129,35 @@ export default function InvitationsPage() {
         },
         ...prev,
       ]);
-      setSuccess(`Invitation created for ${normalized}.`);
+      toast({
+        title: "Invitation created",
+        description: `Invitation created for ${normalized}.`,
+        variant: "success",
+      });
       setEmail("");
     } catch (e) {
       console.error("Error creating invitation:", e);
-      setError("Failed to create invitation.");
+      toast({
+        title: "Request failed",
+        description: "Failed to create the invitation. Please try again.",
+        variant: "error",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleRevoke = async (invitation) => {
-    setError("");
-    setSuccess("");
+    const ok = await confirm({
+      title: "Revoke invitation?",
+      description: `This will revoke access for ${invitation.email}.`,
+      confirmText: "Revoke",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+
+    if (!ok) return;
+
     setActioningId(invitation.id);
     try {
       await updateDoc(doc(db, "invitations", invitation.id), {
@@ -147,18 +175,34 @@ export default function InvitationsPage() {
             : row,
         ),
       );
-      setSuccess(`Invitation revoked for ${invitation.email}.`);
+      toast({
+        title: "Invitation revoked",
+        description: `${invitation.email} no longer has access.`,
+        variant: "success",
+      });
     } catch (e) {
       console.error("Error revoking invitation:", e);
-      setError("Failed to revoke invitation.");
+      toast({
+        title: "Action failed",
+        description: "Failed to revoke invitation. Please try again.",
+        variant: "error",
+      });
     } finally {
       setActioningId("");
     }
   };
 
   const handleResend = async (invitation) => {
-    setError("");
-    setSuccess("");
+    const ok = await confirm({
+      title: "Re-send invitation?",
+      description: `Send a new pending invite to ${invitation.email}.`,
+      confirmText: "Re-send",
+      cancelText: "Cancel",
+      variant: "default",
+    });
+
+    if (!ok) return;
+
     setActioningId(invitation.id);
     try {
       await updateDoc(doc(db, "invitations", invitation.id), {
@@ -184,10 +228,18 @@ export default function InvitationsPage() {
               (a.createdAt?.toMillis ? a.createdAt.toMillis() : 0),
           ),
       );
-      setSuccess(`Invitation re-sent for ${invitation.email}.`);
+      toast({
+        title: "Invitation re-sent",
+        description: `New pending invitation sent to ${invitation.email}.`,
+        variant: "success",
+      });
     } catch (e) {
       console.error("Error re-sending invitation:", e);
-      setError("Failed to re-send invitation.");
+      toast({
+        title: "Action failed",
+        description: "Failed to re-send invitation. Please try again.",
+        variant: "error",
+      });
     } finally {
       setActioningId("");
     }
@@ -236,17 +288,6 @@ export default function InvitationsPage() {
         </button>
       </form>
 
-      {error ? (
-        <p className="rounded-xl border border-red-500/35 bg-red-950/25 px-3 py-2 text-sm text-red-300">
-          {error}
-        </p>
-      ) : null}
-      {success ? (
-        <p className="rounded-xl border border-emerald-400/30 bg-emerald-900/20 px-3 py-2 text-sm text-emerald-300">
-          {success}
-        </p>
-      ) : null}
-
       <div className="space-y-3">
         <h2 className="text-sm font-semibold text-slate-200">Invitations</h2>
         <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
@@ -292,7 +333,6 @@ export default function InvitationsPage() {
             <div className="space-y-2 md:hidden">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div
-                  // eslint-disable-next-line react/no-array-index-key
                   key={i}
                   className="rounded-2xl border border-white/10 bg-slate-900/65 p-3 shadow-[var(--app-shadow-lg)] backdrop-blur-xl"
                 >

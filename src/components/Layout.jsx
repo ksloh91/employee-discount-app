@@ -1,5 +1,5 @@
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 import EmployeeNavTutorial from "./EmployeeNavTutorial";
 import {
   LayoutDashboard,
@@ -25,6 +25,7 @@ const mobileTabClass =
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -148,7 +149,9 @@ export default function Layout() {
       </header>
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:pb-6">
-          <Outlet />
+          <div key={location.pathname} className="page-transition">
+            <Outlet />
+          </div>
         </div>
       </main>
       {user ? (
