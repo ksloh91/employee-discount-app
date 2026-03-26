@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { db } from "../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
+import Skeleton from "../../components/Skeleton";
 
 function formatDate(value) {
   if (!value) return "—";
@@ -287,11 +288,54 @@ export default function InvitationsPage() {
           </button>
         </div>
         {loading ? (
-          <p className="text-sm text-slate-500">Loading...</p>
+          <div className="space-y-2">
+            <div className="space-y-2 md:hidden">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  // eslint-disable-next-line react/no-array-index-key
+                  key={i}
+                  className="rounded-2xl border border-white/10 bg-slate-900/65 p-3 shadow-[var(--app-shadow-lg)] backdrop-blur-xl"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                  <Skeleton className="mt-2 h-3 w-28" />
+                  <div className="mt-3 flex gap-2">
+                    <Skeleton className="h-8 w-20" />
+                    <Skeleton className="h-8 w-20" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="hidden overflow-hidden rounded-2xl border border-white/10 bg-slate-900/65 shadow-[var(--app-shadow-lg)] backdrop-blur-xl md:block">
+              <div className="grid grid-cols-4 gap-2 px-4 py-3 text-xs text-slate-500">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <div className="divide-y divide-white/5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="grid grid-cols-4 gap-2 px-4 py-3">
+                    <Skeleton className="h-4 w-56" />
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-24 rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         ) : visibleInvitations.length === 0 ? (
-          <p className="text-sm text-slate-500">
-            No invitations in this tab.
-          </p>
+          <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 text-center shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
+            <p className="text-sm font-semibold text-white">
+              No invitations in this tab
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              Try switching to another status (Pending, Accepted, Revoked).
+            </p>
+          </div>
         ) : (
           <>
             <div className="space-y-2 md:hidden">

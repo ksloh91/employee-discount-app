@@ -110,7 +110,11 @@ export default function DashboardPage() {
         <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
           <p className="text-xs font-medium text-slate-400">Employees signed up</p>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-indigo-200">
-            {loading ? "—" : employeeCount}
+            {loading ? (
+              <span className="inline-block h-9 w-16 rounded bg-white/10 animate-pulse align-middle" />
+            ) : (
+              employeeCount
+            )}
           </p>
           <Link
             to="/corporate/employees"
@@ -122,13 +126,21 @@ export default function DashboardPage() {
         <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
           <p className="text-xs font-medium text-slate-400">Redemptions this month</p>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-emerald-300">
-            {loading ? "—" : redemptionsThisMonth}
+            {loading ? (
+              <span className="inline-block h-9 w-16 rounded bg-white/10 animate-pulse align-middle" />
+            ) : (
+              redemptionsThisMonth
+            )}
           </p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
           <p className="text-xs font-medium text-slate-400">Participating merchants</p>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-violet-200">
-            {loading ? "—" : merchantCount}
+            {loading ? (
+              <span className="inline-block h-9 w-16 rounded bg-white/10 animate-pulse align-middle" />
+            ) : (
+              merchantCount
+            )}
           </p>
         </div>
       </div>
@@ -136,19 +148,31 @@ export default function DashboardPage() {
         <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
           <p className="text-xs font-medium text-slate-400">Active employees</p>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-emerald-300">
-            {loading ? "—" : activeEmployeeCount}
+            {loading ? (
+              <span className="inline-block h-9 w-16 rounded bg-white/10 animate-pulse align-middle" />
+            ) : (
+              activeEmployeeCount
+            )}
           </p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
           <p className="text-xs font-medium text-slate-400">Suspended employees</p>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-amber-300">
-            {loading ? "—" : suspendedEmployeeCount}
+            {loading ? (
+              <span className="inline-block h-9 w-16 rounded bg-white/10 animate-pulse align-middle" />
+            ) : (
+              suspendedEmployeeCount
+            )}
           </p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
           <p className="text-xs font-medium text-slate-400">Pending invitations</p>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-100">
-            {loading ? "—" : pendingInviteCount}
+            {loading ? (
+              <span className="inline-block h-9 w-16 rounded bg-white/10 animate-pulse align-middle" />
+            ) : (
+              pendingInviteCount
+            )}
           </p>
           <Link
             to="/corporate/invitations"

@@ -3,9 +3,10 @@ import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useDeals } from "../../context/DealsContext";
 import { useAuth } from "../../context/AuthContext";
+import Skeleton from "../../components/Skeleton";
 
 export default function DealsPage() {
-  const { deals } = useDeals();
+  const { deals, loading: dealsLoading, error: dealsError } = useDeals();
   const { user } = useAuth();
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -149,6 +150,57 @@ export default function DealsPage() {
         new Date(b.validUntil).getTime() - new Date(a.validUntil).getTime()
       );
     });
+  }
+
+  if (dealsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <Skeleton className="h-3 w-44" />
+          <Skeleton className="h-10 w-72" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+        <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/65 px-4 py-3 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-28" />
+          </div>
+          <div className="ml-auto flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <Skeleton className="h-9 w-full sm:w-52" />
+            <Skeleton className="h-9 w-full sm:w-32" />
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              // eslint-disable-next-line react/no-array-index-key
+              key={i}
+              className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl"
+            >
+              <Skeleton className="h-10 w-10" />
+              <div className="mt-3 space-y-2">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-4 w-56" />
+                <Skeleton className="h-4 w-40" />
+              </div>
+              <div className="mt-4 space-y-2">
+                <Skeleton className="h-6 w-28" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (dealsError) {
+    return (
+      <div className="rounded-3xl border border-red-500/35 bg-red-950/25 p-4 text-sm text-red-300">
+        Failed to load deals. Please refresh.
+      </div>
+    );
   }
 
   return (
