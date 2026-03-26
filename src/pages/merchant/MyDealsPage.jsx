@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { useDeals } from '../../context/DealsContext';
-import { useAuth } from '../../context/AuthContext';
+import { useDeals } from '../../context/useDeals';
+import { useAuth } from '../../context/useAuth';
 
 export default function MyDealsPage() {
   const navigate = useNavigate();

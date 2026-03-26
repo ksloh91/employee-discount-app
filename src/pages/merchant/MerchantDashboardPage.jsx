@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { useAuth } from "../../context/AuthContext";
-import { useDeals } from "../../context/DealsContext";
+import { useAuth } from "../../context/useAuth";
+import { useDeals } from "../../context/useDeals";
 
 function isoToMs(value) {
   if (!value) return 0;

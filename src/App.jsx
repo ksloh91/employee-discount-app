@@ -3,6 +3,8 @@ import { AuthProvider } from './context/AuthContext';
 import { DealsProvider } from './context/DealsContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ToastProvider } from './components/ToastProvider';
+import { ConfirmProvider } from './components/ConfirmProvider';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import DealsPage from './pages/employee/DealsPage';
@@ -25,88 +27,92 @@ export default function App() {
   return (
     <AuthProvider>
       <DealsProvider>
-        <BrowserRouter basename={routerBasename}>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
-              <Route
-                path="/employee/deals"
-                element={
-                  <ProtectedRoute allowedRoles={['employee']}>
-                    <DealsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/employee/redemptions"
-                element={
-                  <ProtectedRoute allowedRoles={['employee']}>
-                    <MyRedemptionsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/corporate/dashboard"
-                element={
-                  <ProtectedRoute allowedRoles={['corporate']}>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/corporate/invitations"
-                element={
-                  <ProtectedRoute allowedRoles={['corporate']}>
-                    <InvitationsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/corporate/employees"
-                element={
-                  <ProtectedRoute allowedRoles={['corporate']}>
-                    <EmployeesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/merchant/deals"
-                element={
-                  <ProtectedRoute allowedRoles={['merchant']}>
-                    <MyDealsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/merchant/dashboard"
-                element={
-                  <ProtectedRoute allowedRoles={['merchant']}>
-                    <MerchantDashboardPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/merchant/add-deal"
-                element={
-                  <ProtectedRoute allowedRoles={['merchant']}>
-                    <AddDealsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/merchant/edit-deal/:id"
-                element={
-                  <ProtectedRoute allowedRoles={['merchant']}>
-                    <EditDealPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+        <ToastProvider>
+          <ConfirmProvider>
+            <BrowserRouter basename={routerBasename}>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignUpPage />} />
+                  <Route
+                    path="/employee/deals"
+                    element={
+                      <ProtectedRoute allowedRoles={['employee']}>
+                        <DealsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/employee/redemptions"
+                    element={
+                      <ProtectedRoute allowedRoles={['employee']}>
+                        <MyRedemptionsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/corporate/dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['corporate']}>
+                        <DashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/corporate/invitations"
+                    element={
+                      <ProtectedRoute allowedRoles={['corporate']}>
+                        <InvitationsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/corporate/employees"
+                    element={
+                      <ProtectedRoute allowedRoles={['corporate']}>
+                        <EmployeesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/merchant/deals"
+                    element={
+                      <ProtectedRoute allowedRoles={['merchant']}>
+                        <MyDealsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/merchant/dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['merchant']}>
+                        <MerchantDashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/merchant/add-deal"
+                    element={
+                      <ProtectedRoute allowedRoles={['merchant']}>
+                        <AddDealsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/merchant/edit-deal/:id"
+                    element={
+                      <ProtectedRoute allowedRoles={['merchant']}>
+                        <EditDealPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </ConfirmProvider>
+        </ToastProvider>
       </DealsProvider>
     </AuthProvider>
   );
