@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { Link } from "react-router-dom";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { db } from "../../lib/firebase";
 
 function isoToMs(value) {
@@ -14,6 +23,7 @@ function isoToMs(value) {
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
+  const [rangeDays, setRangeDays] = useState(30);
   const [employeeCount, setEmployeeCount] = useState(0);
   const [activeEmployeeCount, setActiveEmployeeCount] = useState(0);
   const [suspendedEmployeeCount, setSuspendedEmployeeCount] = useState(0);
@@ -27,6 +37,7 @@ export default function DashboardPage() {
     setLoading(true);
     setError("");
     try {
+      // 1) Data fetch layer: load all raw datasets in parallel.
       const [employeesSnap, merchantsSnap, redemptionsSnap, invitationsSnap] = await Promise.all([
         getDocs(query(collection(db, "users"), where("role", "==", "employee"))),
         getDocs(query(collection(db, "users"), where("role", "==", "merchant"))),
@@ -37,11 +48,13 @@ export default function DashboardPage() {
       const employees = employeesSnap.docs.map((d) => d.data());
       const suspended = employees.filter((e) => e.status === "suspended").length;
       const active = employees.length - suspended;
+      // Store summary metrics for direct KPI cards.
       setEmployeeCount(employees.length);
       setActiveEmployeeCount(active);
       setSuspendedEmployeeCount(suspended);
       setPendingInviteCount(invitationsSnap.size);
       setMerchantCount(merchantsSnap.size);
+      // Keep full redemptions list; we'll derive chart + top lists from it.
       setRedemptions(redemptionsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
       setLastUpdatedAt(Date.now());
     } catch (e) {
@@ -57,6 +70,7 @@ export default function DashboardPage() {
   }, [load]);
 
   const redemptionsThisMonth = useMemo(() => {
+    // 2) Transformation layer: derive this month's count from raw redemptions.
     const now = new Date();
     const month = now.getMonth();
     const year = now.getFullYear();
@@ -66,6 +80,64 @@ export default function DashboardPage() {
       const dt = new Date(ts);
       return dt.getMonth() === month && dt.getFullYear() === year;
     }).length;
+  }, [redemptions]);
+
+  const chartData = useMemo(() => {
+    // Build a complete day-by-day series so zero-count days still render on chart.
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const start = new Date(today);
+    start.setDate(today.getDate() - (rangeDays - 1));
+    const startMs = start.getTime();
+
+    const byDay = new Map();
+    for (let i = 0; i < rangeDays; i += 1) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      byDay.set(key, {
+        key,
+        label: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+        count: 0,
+      });
+    }
+
+    redemptions.forEach((r) => {
+      // Bucket each redemption into its date key.
+      const ts = isoToMs(r.redeemedAt);
+      if (!ts || ts < startMs) return;
+      const key = new Date(ts).toISOString().slice(0, 10);
+      const row = byDay.get(key);
+      if (row) row.count += 1;
+    });
+
+    return Array.from(byDay.values());
+  }, [rangeDays, redemptions]);
+
+  const topDeals = useMemo(() => {
+    // Aggregate + rank deal IDs by redemption volume (top 5).
+    const counts = new Map();
+    redemptions.forEach((r) => {
+      const id = r.dealId || "unknown";
+      counts.set(id, (counts.get(id) || 0) + 1);
+    });
+    return Array.from(counts.entries())
+      .map(([id, count]) => ({ id, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [redemptions]);
+
+  const topMerchants = useMemo(() => {
+    // Aggregate + rank merchant IDs by redemption volume (top 5).
+    const counts = new Map();
+    redemptions.forEach((r) => {
+      const id = r.merchantId || "unknown";
+      counts.set(id, (counts.get(id) || 0) + 1);
+    });
+    return Array.from(counts.entries())
+      .map(([id, count]) => ({ id, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
   }, [redemptions]);
 
   return (
@@ -106,6 +178,105 @@ export default function DashboardPage() {
           </button>
         </div>
       ) : null}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl lg:col-span-2">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold text-white">Redemptions trend</p>
+              <p className="text-xs text-slate-400">
+                Daily redemptions for the selected period.
+              </p>
+            </div>
+            <div className="inline-flex rounded-full border border-white/10 bg-white/5 p-1 text-xs">
+              {[7, 30, 90].map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  onClick={() => setRangeDays(days)}
+                  className={`rounded-full px-3 py-1 font-semibold transition ${
+                    rangeDays === days
+                      ? "bg-amber-300/20 text-amber-200"
+                      : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  {days}d
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="h-64 rounded-2xl border border-white/10 bg-slate-950/45 p-2">
+            {loading ? (
+              <div className="h-full animate-pulse rounded-xl bg-white/5" />
+            ) : (
+              // 3) Rendering layer: chart consumes transformed `chartData`.
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 8, right: 12, left: -12, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.18)" />
+                  <XAxis dataKey="label" tick={{ fill: "#94a3b8", fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fill: "#94a3b8", fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    cursor={{ stroke: "rgba(255,186,0,0.35)", strokeWidth: 1 }}
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      backgroundColor: "rgba(2,6,23,0.92)",
+                      color: "#e2e8f0",
+                      fontSize: "12px",
+                    }}
+                    formatter={(value) => [`${value}`, "Redemptions"]}
+                    labelFormatter={(label) => `Date: ${label}`}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#ffba00"
+                    strokeWidth={2.5}
+                    dot={false}
+                    activeDot={{ r: 4, fill: "#ffba00", strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
+            <p className="text-sm font-semibold text-white">Top deals</p>
+            <p className="mb-2 text-xs text-slate-400">Most redeemed deal IDs</p>
+            <ul className="space-y-2 text-xs">
+              {topDeals.length === 0 ? (
+                <li className="text-slate-500">No redemptions yet.</li>
+              ) : (
+                // Render derived rankings from `topDeals`.
+                topDeals.map((d) => (
+                  <li key={d.id} className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2">
+                    <span className="truncate text-slate-200">{d.id}</span>
+                    <span className="font-semibold text-amber-200">{d.count}</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
+            <p className="text-sm font-semibold text-white">Top merchants</p>
+            <p className="mb-2 text-xs text-slate-400">Most redeemed merchant IDs</p>
+            <ul className="space-y-2 text-xs">
+              {topMerchants.length === 0 ? (
+                <li className="text-slate-500">No redemptions yet.</li>
+              ) : (
+                // Render derived rankings from `topMerchants`.
+                topMerchants.map((m) => (
+                  <li key={m.id} className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2">
+                    <span className="truncate text-slate-200">{m.id}</span>
+                    <span className="font-semibold text-emerald-200">{m.count}</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        </div>
+      </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-3xl border border-white/10 bg-slate-900/65 p-4 shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
           <p className="text-xs font-medium text-slate-400">Employees signed up</p>
