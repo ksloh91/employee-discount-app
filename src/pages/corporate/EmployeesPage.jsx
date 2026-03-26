@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
+import Skeleton from "../../components/Skeleton";
 
 function tsToDateString(value) {
   if (!value) return "—";
@@ -88,9 +89,33 @@ export default function EmployeesPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading employees...</p>
+        <div className="overflow-x-auto rounded-2xl border border-slate-700 bg-slate-900/50">
+          <div className="grid grid-cols-5 gap-0 border-b border-slate-700 px-4 py-3 text-xs">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <div>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="grid grid-cols-5 gap-0 px-4 py-3 border-b border-slate-800 last:border-0">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-44" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-8 w-20 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
       ) : filteredEmployees.length === 0 ? (
-        <p className="text-sm text-slate-500">No employees found.</p>
+        <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 text-center shadow-[var(--app-shadow-lg)] backdrop-blur-xl">
+          <p className="text-sm font-semibold text-white">No employees found</p>
+          <p className="mt-1 text-xs text-slate-400">
+            Try a different search term.
+          </p>
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-slate-700 bg-slate-900/50">
           <table className="min-w-[760px] w-full text-left text-sm">
