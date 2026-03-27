@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useDeals } from "../../context/useDeals";
@@ -17,6 +19,66 @@ export default function DealsPage() {
   const [redeemError, setRedeemError] = useState("");
   const [selectedDealTotalRedeemed, setSelectedDealTotalRedeemed] = useState(0);
   const [checkingLimits, setCheckingLimits] = useState(false);
+  const sliderTrackRef = useRef(null);
+  const [sliderTravelPx, setSliderTravelPx] = useState(0);
+  const [sliderOffsetPx, setSliderOffsetPx] = useState(0);
+  const [isDraggingSlider, setIsDraggingSlider] = useState(false);
+  const dragStartXRef = useRef(0);
+  const dragStartOffsetRef = useRef(0);
+  const dragDisabledRef = useRef(false);
+
+  const triggerHapticImpact = async (style) => {
+    try {
+      await Haptics.impact({ style });
+    } catch {
+      // Ignore unsupported platforms (e.g. desktop web).
+    }
+  };
+
+  const triggerHapticNotification = async (type) => {
+    try {
+      await Haptics.notification({ type });
+    } catch {
+      // Ignore unsupported platforms (e.g. desktop web).
+    }
+  };
+
+  // Keep redeem modal behavior app-like on mobile:
+  // lock page scroll while modal is open.
+  useEffect(() => {
+    if (!selectedDeal) return undefined;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [selectedDeal]);
+
+  useEffect(() => {
+    if (!selectedDeal) return undefined;
+
+    const recalcSliderTravel = () => {
+      const track = sliderTrackRef.current;
+      if (!track) return;
+      const knobWidth = 96; // w-24
+      const inset = 2; // 0.5 * 4px
+      const travel = Math.max(0, track.clientWidth - knobWidth - inset * 2);
+      setSliderTravelPx(travel);
+      setSliderOffsetPx((current) =>
+        sliderComplete ? travel : Math.min(current, travel),
+      );
+    };
+
+    const rafId = requestAnimationFrame(recalcSliderTravel);
+    window.addEventListener("resize", recalcSliderTravel);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", recalcSliderTravel);
+    };
+  }, [selectedDeal, sliderComplete]);
 
   useEffect(() => {
     if (!user) return;
@@ -41,6 +103,8 @@ export default function DealsPage() {
     setSelectedDeal(deal);
     // Slider is per modal session; allow redeem again until limits reached.
     setSliderComplete(false);
+    setSliderOffsetPx(0);
+    setIsDraggingSlider(false);
     setRedeemError("");
     setSelectedDealTotalRedeemed(0);
 
@@ -64,13 +128,15 @@ export default function DealsPage() {
   const closeRedeemModal = () => {
     setSelectedDeal(null);
     setSliderComplete(false);
+    setSliderOffsetPx(0);
+    setIsDraggingSlider(false);
     setRedeemError("");
     setSelectedDealTotalRedeemed(0);
     setCheckingLimits(false);
   };
 
   const handleSliderActivate = async () => {
-    if (!selectedDeal || sliderComplete || !user) return;
+    if (!selectedDeal || sliderComplete || !user) return false;
     setRedeemError("");
 
     const maxTotal = selectedDeal.maxTotalRedemptions ?? null;
@@ -89,7 +155,7 @@ export default function DealsPage() {
         setRedeemError(
           "This offer has reached its maximum number of redemptions.",
         );
-        return;
+        return false;
       }
     }
 
@@ -99,7 +165,7 @@ export default function DealsPage() {
         setRedeemError(
           "You’ve reached the maximum number of redemptions for this offer.",
         );
-        return;
+        return false;
       }
     }
 
@@ -118,6 +184,86 @@ export default function DealsPage() {
     if (selectedDeal.maxTotalRedemptions != null) {
       setSelectedDealTotalRedeemed((prev) => prev + 1);
     }
+    return true;
+  };
+
+  const clampSliderOffset = (value) =>
+    Math.max(0, Math.min(value, sliderTravelPx));
+
+  const startDrag = (clientX, disabled) => {
+    if (disabled || sliderComplete) return;
+    dragDisabledRef.current = disabled;
+    setIsDraggingSlider(true);
+    dragStartXRef.current = clientX;
+    dragStartOffsetRef.current = sliderOffsetPx;
+    void triggerHapticImpact(ImpactStyle.Light);
+  };
+
+  const moveDrag = (clientX) => {
+    const next = clampSliderOffset(
+      dragStartOffsetRef.current + (clientX - dragStartXRef.current),
+    );
+    setSliderOffsetPx(next);
+  };
+
+  const endDrag = async (disabled) => {
+    if (!isDraggingSlider) return;
+    setIsDraggingSlider(false);
+    if (disabled || sliderComplete) return;
+
+    const threshold = sliderTravelPx * 0.92;
+    if (sliderOffsetPx >= threshold && sliderTravelPx > 0) {
+      setSliderOffsetPx(sliderTravelPx);
+      void triggerHapticImpact(ImpactStyle.Medium);
+      const ok = await handleSliderActivate();
+      if (!ok) {
+        setSliderOffsetPx(0);
+        void triggerHapticNotification(NotificationType.Warning);
+      } else {
+        void triggerHapticNotification(NotificationType.Success);
+      }
+      return;
+    }
+    setSliderOffsetPx(0);
+    void triggerHapticImpact(ImpactStyle.Light);
+  };
+
+  useEffect(() => {
+    if (!isDraggingSlider) return undefined;
+
+    const onMouseMove = (event) => {
+      moveDrag(event.clientX);
+    };
+
+    const onTouchMove = (event) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      event.preventDefault();
+      moveDrag(touch.clientX);
+    };
+
+    const onEnd = () => {
+      void endDrag(dragDisabledRef.current);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onEnd);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onEnd);
+    window.addEventListener("touchcancel", onEnd);
+
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onEnd);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onEnd);
+      window.removeEventListener("touchcancel", onEnd);
+    };
+  }, [isDraggingSlider, sliderComplete, sliderOffsetPx, sliderTravelPx]);
+
+  const handleSliderPointerDown = (event, disabled) => {
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    startDrag(event.clientX, disabled);
   };
 
   const categories = Array.from(
@@ -345,9 +491,10 @@ export default function DealsPage() {
         )}
       </div>
 
-      {selectedDeal && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm animate-[fadeIn_160ms_ease-out]">
-          <div className="w-full max-w-sm rounded-3xl border border-white/15 bg-slate-900/92 p-5 shadow-2xl backdrop-blur-xl animate-[fadeScaleIn_180ms_ease-out]">
+      {selectedDeal && typeof document !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-[80] bg-slate-950/70 p-4 backdrop-blur-sm animate-[fadeIn_160ms_ease-out]">
+              <div className="absolute left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-sm max-h-[calc(100dvh-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-white/15 bg-slate-900/92 p-5 shadow-2xl backdrop-blur-xl animate-[fadeScaleIn_180ms_ease-out]">
             <div className="space-y-2">
               <p className="text-[0.7rem] font-medium uppercase tracking-[0.25em] text-slate-400">
                 Confirm redemption
@@ -365,7 +512,7 @@ export default function DealsPage() {
             </p>
 
             <div className="mt-5 space-y-3">
-              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">image.png
                 Slide to redeem
               </p>
               <p className="text-[0.7rem] text-slate-400">
@@ -422,9 +569,9 @@ export default function DealsPage() {
                     <p className="mt-2 text-xs text-slate-400">Checking limits…</p>
                   )}
                   <button
+                    ref={sliderTrackRef}
                     type="button"
                     disabled={checkingLimits || fullyRedeemed}
-                    onClick={handleSliderActivate}
                     className={`mt-3 relative flex h-10 w-full items-center rounded-full text-xs font-medium shadow-inner transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
                       fullyRedeemed
                         ? "cursor-not-allowed bg-slate-700 text-slate-300"
@@ -432,11 +579,32 @@ export default function DealsPage() {
                     }`}
                   >
                     <span
-                      className={`absolute left-0 flex h-9 w-24 items-center justify-center rounded-full bg-orange-03 text-[0.7rem] font-semibold text-slate-950 shadow transition-transform ${
-                        sliderComplete
-                          ? "translate-x-[calc(100%-4.75rem)]"
-                          : "translate-x-0"
-                      }${fullyRedeemed ? " hidden" : ""}`}
+                      role="slider"
+                      aria-valuemin={0}
+                      aria-valuemax={Math.round(sliderTravelPx)}
+                      aria-valuenow={Math.round(
+                        sliderComplete ? sliderTravelPx : sliderOffsetPx,
+                      )}
+                      aria-label="Slide to redeem"
+                      onPointerDown={(event) =>
+                        handleSliderPointerDown(
+                          event,
+                          checkingLimits || fullyRedeemed,
+                        )
+                      }
+                      onTouchStart={(event) => {
+                        const t = event.touches[0];
+                        if (!t) return;
+                        startDrag(t.clientX, checkingLimits || fullyRedeemed);
+                      }}
+                      onPointerCancel={() => {
+                        setIsDraggingSlider(false);
+                        setSliderOffsetPx(sliderComplete ? sliderTravelPx : 0);
+                      }}
+                      className={`absolute inset-y-0.5 left-0.5 flex w-24 select-none items-center justify-center rounded-full bg-orange-03 text-[0.7rem] font-semibold text-slate-950 shadow transition-transform ease-out ${isDraggingSlider ? "cursor-grabbing duration-75" : "cursor-grab duration-300"} ${fullyRedeemed ? "hidden" : ""}`}
+                      style={{
+                        transform: `translateX(${sliderComplete ? sliderTravelPx : sliderOffsetPx}px)`,
+                      }}
                     >
                       Slide
                     </span>
@@ -489,9 +657,11 @@ export default function DealsPage() {
                 Close
               </button>
             </div>
-          </div>
-        </div>
-      )}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

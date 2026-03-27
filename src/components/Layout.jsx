@@ -51,7 +51,7 @@ export default function Layout() {
 
             {user && (
               <div className="max-w-[180px] truncate text-xs text-slate-600 sm:max-w-none sm:text-sm">
-                Logged in as {user.displayName}
+                Logged in as {user.displayName} test123
               </div>
             )}
           </div>
