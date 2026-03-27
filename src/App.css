@@ -2,3 +2,8 @@
 #root {
   min-height: 100vh;
 }
+
+
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+}

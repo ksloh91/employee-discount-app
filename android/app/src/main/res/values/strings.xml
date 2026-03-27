@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Employee Deals Platform</string>
+    <string name="title_activity_main">Employee Deals Platform</string>
+    <string name="package_name">com.ksloh91.employeedeals</string>
+    <string name="custom_url_scheme">com.ksloh91.employeedeals</string>
+</resources>
