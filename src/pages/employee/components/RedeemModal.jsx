@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
 
@@ -25,6 +25,7 @@ export default function RedeemModal({
   const dragStartXRef = useRef(0);
   const dragStartOffsetRef = useRef(0);
   const dragDisabledRef = useRef(false);
+  const sliderSessionRef = useRef(0);
 
   const maxPerUser = deal?.maxPerUserRedemptions ?? null;
   const maxTotal = deal?.maxTotalRedemptions ?? null;
@@ -69,8 +70,9 @@ export default function RedeemModal({
     };
   }, [isOpen]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen) return;
+    sliderSessionRef.current += 1;
     setSliderComplete(false);
     setSliderOffsetPx(0);
     setIsDraggingSlider(false);
@@ -86,9 +88,7 @@ export default function RedeemModal({
       const inset = 2; // 0.5 * 4px
       const travel = Math.max(0, track.clientWidth - knobWidth - inset * 2);
       setSliderTravelPx(travel);
-      setSliderOffsetPx((current) =>
-        sliderComplete ? travel : Math.min(current, travel),
-      );
+      setSliderOffsetPx((current) => Math.min(current, travel));
     };
 
     const rafId = requestAnimationFrame(recalcSliderTravel);
@@ -97,7 +97,7 @@ export default function RedeemModal({
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", recalcSliderTravel);
     };
-  }, [isOpen, sliderComplete]);
+  }, [isOpen]);
 
   const startDrag = (clientX, disabled) => {
     if (disabled || sliderComplete) return;
@@ -124,9 +124,11 @@ export default function RedeemModal({
 
     const threshold = sliderTravelPx * 0.92;
     if (sliderOffsetPx >= threshold && sliderTravelPx > 0) {
+      const sessionAtStart = sliderSessionRef.current;
       setSliderOffsetPx(sliderTravelPx);
       void triggerHapticImpact(ImpactStyle.Medium);
       const ok = await onRedeemAttempt();
+      if (sessionAtStart !== sliderSessionRef.current) return;
       if (!ok) {
         setSliderOffsetPx(0);
         void triggerHapticNotification(NotificationType.Warning);
@@ -138,6 +140,14 @@ export default function RedeemModal({
     }
     setSliderOffsetPx(0);
     void triggerHapticImpact(ImpactStyle.Light);
+  };
+
+  const handleClose = () => {
+    sliderSessionRef.current += 1;
+    setSliderComplete(false);
+    setSliderOffsetPx(0);
+    setIsDraggingSlider(false);
+    onClose();
   };
 
   useEffect(() => {
@@ -242,7 +252,7 @@ export default function RedeemModal({
         >
           <span
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-0.5 left-0.5 rounded-full transition-[width] duration-75 ${
+            className={`pointer-events-none absolute inset-y-0.5 left-0.5 rounded-full ${
               fullyRedeemed ? "bg-transparent" : "bg-orange-200/80"
             }`}
             style={{
@@ -325,7 +335,7 @@ export default function RedeemModal({
           <button
             type="button"
             className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-white"
-            onClick={onClose}
+            onClick={handleClose}
           >
             Close
           </button>
