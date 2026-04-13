@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
+import { useEffect, useState } from "react";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useDeals } from "../../context/useDeals";
 import { useAuth } from "../../context/useAuth";
 import Skeleton from "../../components/Skeleton";
+import RedeemModal from "./components/RedeemModal";
 
 export default function DealsPage() {
   const { deals, loading: dealsLoading, error: dealsError } = useDeals();
@@ -14,71 +13,10 @@ export default function DealsPage() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("a-z");
-  const [sliderComplete, setSliderComplete] = useState(false);
   const [redeemedCounts, setRedeemedCounts] = useState(new Map());
   const [redeemError, setRedeemError] = useState("");
   const [selectedDealTotalRedeemed, setSelectedDealTotalRedeemed] = useState(0);
   const [checkingLimits, setCheckingLimits] = useState(false);
-  const sliderTrackRef = useRef(null);
-  const [sliderTravelPx, setSliderTravelPx] = useState(0);
-  const [sliderOffsetPx, setSliderOffsetPx] = useState(0);
-  const [isDraggingSlider, setIsDraggingSlider] = useState(false);
-  const dragStartXRef = useRef(0);
-  const dragStartOffsetRef = useRef(0);
-  const dragDisabledRef = useRef(false);
-
-  const triggerHapticImpact = async (style) => {
-    try {
-      await Haptics.impact({ style });
-    } catch {
-      // Ignore unsupported platforms (e.g. desktop web).
-    }
-  };
-
-  const triggerHapticNotification = async (type) => {
-    try {
-      await Haptics.notification({ type });
-    } catch {
-      // Ignore unsupported platforms (e.g. desktop web).
-    }
-  };
-
-  // Keep redeem modal behavior app-like on mobile:
-  // lock page scroll while modal is open.
-  useEffect(() => {
-    if (!selectedDeal) return undefined;
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousBodyOverflow;
-      document.documentElement.style.overflow = previousHtmlOverflow;
-    };
-  }, [selectedDeal]);
-
-  useEffect(() => {
-    if (!selectedDeal) return undefined;
-
-    const recalcSliderTravel = () => {
-      const track = sliderTrackRef.current;
-      if (!track) return;
-      const knobWidth = 96; // w-24
-      const inset = 2; // 0.5 * 4px
-      const travel = Math.max(0, track.clientWidth - knobWidth - inset * 2);
-      setSliderTravelPx(travel);
-      setSliderOffsetPx((current) =>
-        sliderComplete ? travel : Math.min(current, travel),
-      );
-    };
-
-    const rafId = requestAnimationFrame(recalcSliderTravel);
-    window.addEventListener("resize", recalcSliderTravel);
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener("resize", recalcSliderTravel);
-    };
-  }, [selectedDeal, sliderComplete]);
 
   useEffect(() => {
     if (!user) return;
@@ -101,10 +39,6 @@ export default function DealsPage() {
 
   const openRedeemModal = async (deal) => {
     setSelectedDeal(deal);
-    // Slider is per modal session; allow redeem again until limits reached.
-    setSliderComplete(false);
-    setSliderOffsetPx(0);
-    setIsDraggingSlider(false);
     setRedeemError("");
     setSelectedDealTotalRedeemed(0);
 
@@ -127,16 +61,13 @@ export default function DealsPage() {
 
   const closeRedeemModal = () => {
     setSelectedDeal(null);
-    setSliderComplete(false);
-    setSliderOffsetPx(0);
-    setIsDraggingSlider(false);
     setRedeemError("");
     setSelectedDealTotalRedeemed(0);
     setCheckingLimits(false);
   };
 
   const handleSliderActivate = async () => {
-    if (!selectedDeal || sliderComplete || !user) return false;
+    if (!selectedDeal || !user) return false;
     setRedeemError("");
 
     const maxTotal = selectedDeal.maxTotalRedemptions ?? null;
@@ -169,7 +100,6 @@ export default function DealsPage() {
       }
     }
 
-    setSliderComplete(true);
     await addDoc(collection(db, "redemptions"), {
       userId: user.uid,
       dealId: selectedDeal.id,
@@ -185,85 +115,6 @@ export default function DealsPage() {
       setSelectedDealTotalRedeemed((prev) => prev + 1);
     }
     return true;
-  };
-
-  const clampSliderOffset = (value) =>
-    Math.max(0, Math.min(value, sliderTravelPx));
-
-  const startDrag = (clientX, disabled) => {
-    if (disabled || sliderComplete) return;
-    dragDisabledRef.current = disabled;
-    setIsDraggingSlider(true);
-    dragStartXRef.current = clientX;
-    dragStartOffsetRef.current = sliderOffsetPx;
-    void triggerHapticImpact(ImpactStyle.Light);
-  };
-
-  const moveDrag = (clientX) => {
-    const next = clampSliderOffset(
-      dragStartOffsetRef.current + (clientX - dragStartXRef.current),
-    );
-    setSliderOffsetPx(next);
-  };
-
-  const endDrag = async (disabled) => {
-    if (!isDraggingSlider) return;
-    setIsDraggingSlider(false);
-    if (disabled || sliderComplete) return;
-
-    const threshold = sliderTravelPx * 0.92;
-    if (sliderOffsetPx >= threshold && sliderTravelPx > 0) {
-      setSliderOffsetPx(sliderTravelPx);
-      void triggerHapticImpact(ImpactStyle.Medium);
-      const ok = await handleSliderActivate();
-      if (!ok) {
-        setSliderOffsetPx(0);
-        void triggerHapticNotification(NotificationType.Warning);
-      } else {
-        void triggerHapticNotification(NotificationType.Success);
-      }
-      return;
-    }
-    setSliderOffsetPx(0);
-    void triggerHapticImpact(ImpactStyle.Light);
-  };
-
-  useEffect(() => {
-    if (!isDraggingSlider) return undefined;
-
-    const onMouseMove = (event) => {
-      moveDrag(event.clientX);
-    };
-
-    const onTouchMove = (event) => {
-      const touch = event.touches[0];
-      if (!touch) return;
-      event.preventDefault();
-      moveDrag(touch.clientX);
-    };
-
-    const onEnd = () => {
-      void endDrag(dragDisabledRef.current);
-    };
-
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onEnd);
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    window.addEventListener("touchend", onEnd);
-    window.addEventListener("touchcancel", onEnd);
-
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onEnd);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onEnd);
-      window.removeEventListener("touchcancel", onEnd);
-    };
-  }, [isDraggingSlider, sliderComplete, sliderOffsetPx, sliderTravelPx]);
-
-  const handleSliderPointerDown = (event, disabled) => {
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    startDrag(event.clientX, disabled);
   };
 
   const categories = Array.from(
@@ -491,177 +342,18 @@ export default function DealsPage() {
         )}
       </div>
 
-      {selectedDeal && typeof document !== "undefined"
-        ? createPortal(
-            <div className="fixed inset-0 z-[80] bg-slate-950/70 p-4 backdrop-blur-sm animate-[fadeIn_160ms_ease-out]">
-              <div className="absolute left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-sm max-h-[calc(100dvh-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-white/15 bg-slate-900/92 p-5 shadow-2xl backdrop-blur-xl animate-[fadeScaleIn_180ms_ease-out]">
-            <div className="space-y-2">
-              <p className="text-[0.7rem] font-medium uppercase tracking-[0.25em] text-slate-400">
-                Confirm redemption
-              </p>
-              <h2 className="text-lg font-semibold tracking-tight text-white">
-                {selectedDeal.merchantName}
-              </h2>
-              <p className="text-xs text-slate-300">{selectedDeal.title}</p>
-            </div>
-
-            <p className="mt-4 text-xs text-slate-300">
-              Are you sure you want to redeem this offer now? Some offers may be
-              single‑use and start their validity as soon as you reveal the
-              code.
-            </p>
-
-            <div className="mt-5 space-y-3">
-              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">image.png
-                Slide to redeem
-              </p>
-              <p className="text-[0.7rem] text-slate-400">
-                Redeemed by you:{" "}
-                <span className="font-semibold text-slate-100">
-                  {redeemedCounts.get(selectedDeal.id) || 0}
-                </span>
-                {selectedDeal.maxPerUserRedemptions != null && (
-                  <>
-                    {" "}
-                    /{" "}
-                    <span className="font-semibold text-slate-100">
-                      {selectedDeal.maxPerUserRedemptions}
-                    </span>
-                  </>
-                )}
-              </p>
-              {selectedDeal.maxTotalRedemptions != null && (
-                <p className="text-[0.7rem] text-slate-400">
-                  Total redeemed:{" "}
-                  <span className="font-semibold text-slate-100">
-                    {selectedDealTotalRedeemed}
-                  </span>{" "}
-                  /{" "}
-                  <span className="font-semibold text-slate-100">
-                    {selectedDeal.maxTotalRedemptions}
-                  </span>
-                </p>
-              )}
-              {redeemError && (
-                <p className="text-xs font-semibold text-red-600">
-                  {redeemError}
-                </p>
-              )}
-            </div>
-
-            {(() => {
-              const perUserCount = redeemedCounts.get(selectedDeal.id) || 0;
-              const maxPerUser = selectedDeal.maxPerUserRedemptions ?? null;
-              const maxTotal = selectedDeal.maxTotalRedemptions ?? null;
-              const perUserLimitReached = maxPerUser != null && perUserCount >= maxPerUser;
-              const totalLimitReached =
-                maxTotal != null && selectedDealTotalRedeemed >= maxTotal;
-              const fullyRedeemed = perUserLimitReached || totalLimitReached;
-
-              return (
-                <>
-                  {fullyRedeemed && !redeemError && (
-                    <p className="mt-2 text-xs font-semibold text-red-600">
-                      Fully redeemed
-                    </p>
-                  )}
-                  {checkingLimits && (
-                    <p className="mt-2 text-xs text-slate-400">Checking limits…</p>
-                  )}
-                  <button
-                    ref={sliderTrackRef}
-                    type="button"
-                    disabled={checkingLimits || fullyRedeemed}
-                    className={`mt-3 relative flex h-10 w-full items-center rounded-full text-xs font-medium shadow-inner transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
-                      fullyRedeemed
-                        ? "cursor-not-allowed bg-slate-700 text-slate-300"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    <span
-                      role="slider"
-                      aria-valuemin={0}
-                      aria-valuemax={Math.round(sliderTravelPx)}
-                      aria-valuenow={Math.round(
-                        sliderComplete ? sliderTravelPx : sliderOffsetPx,
-                      )}
-                      aria-label="Slide to redeem"
-                      onPointerDown={(event) =>
-                        handleSliderPointerDown(
-                          event,
-                          checkingLimits || fullyRedeemed,
-                        )
-                      }
-                      onTouchStart={(event) => {
-                        const t = event.touches[0];
-                        if (!t) return;
-                        startDrag(t.clientX, checkingLimits || fullyRedeemed);
-                      }}
-                      onPointerCancel={() => {
-                        setIsDraggingSlider(false);
-                        setSliderOffsetPx(sliderComplete ? sliderTravelPx : 0);
-                      }}
-                      className={`absolute inset-y-0.5 left-0.5 flex w-24 select-none items-center justify-center rounded-full bg-orange-03 text-[0.7rem] font-semibold text-slate-950 shadow transition-transform ease-out ${isDraggingSlider ? "cursor-grabbing duration-75" : "cursor-grab duration-300"} ${fullyRedeemed ? "hidden" : ""}`}
-                      style={{
-                        transform: `translateX(${sliderComplete ? sliderTravelPx : sliderOffsetPx}px)`,
-                      }}
-                    >
-                      Slide
-                    </span>
-                    <span className="mx-auto text-[0.7rem]">
-                      {fullyRedeemed
-                        ? "Limit reached"
-                        : sliderComplete
-                          ? "Redeemed"
-                          : "Slide to reveal QR & code"}
-                    </span>
-                  </button>
-                </>
-              );
-            })()}
-
-            {sliderComplete && (
-              <div className="mt-5 space-y-3 rounded-2xl border border-white/10 bg-slate-800/70 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-900 text-[0.6rem] font-semibold text-slate-300 ring-1 ring-dashed ring-slate-500">
-                    QR
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-100">
-                      Show this at checkout
-                    </p>
-                    <p className="text-[0.7rem] text-slate-300">
-                      The QR code and promo code below are now active.
-                    </p>
-                  </div>
-                </div>
-                {selectedDeal.code && (
-                  <div className="mt-2 rounded-lg bg-slate-950 px-3 py-2 text-center ring-1 ring-white/10">
-                    <p className="text-[0.65rem] font-medium uppercase tracking-[0.25em] text-slate-400">
-                      Promo code
-                    </p>
-                    <p className="mt-1 font-mono text-sm font-semibold text-white">
-                      {selectedDeal.code}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="mt-5 flex justify-end gap-2 text-xs">
-              <button
-                type="button"
-                className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-white"
-                onClick={closeRedeemModal}
-              >
-                Close
-              </button>
-            </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      <RedeemModal
+        isOpen={Boolean(selectedDeal)}
+        deal={selectedDeal}
+        redeemedCountByUser={
+          selectedDeal ? (redeemedCounts.get(selectedDeal.id) || 0) : 0
+        }
+        selectedDealTotalRedeemed={selectedDealTotalRedeemed}
+        checkingLimits={checkingLimits}
+        redeemError={redeemError}
+        onClose={closeRedeemModal}
+        onRedeemAttempt={handleSliderActivate}
+      />
     </div>
   );
 }
